@@ -1,7 +1,21 @@
-export default function App() {
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './pages/Login';
+import AdminDashboard from './pages/AdminDashboard';
+import InstructorDashboard from './pages/InstructorDashboard';
+import StudentDashboard from './pages/StudentDashboard';
+
+function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <h1 className="text-3xl font-bold">Ready to build!</h1>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        {/* مسار الـ Super Admin الخاص بكل منظومة */}
+        <Route path="/admin/organizations/:orgId" element={<AdminDashboard />} />
+        <Route path="/instructor" element={<InstructorDashboard />} />
+        <Route path="/student" element={<StudentDashboard />} />
+      </Routes>
+    </Router>
   );
 }
+
+export default App;
