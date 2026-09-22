@@ -9,7 +9,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        {/* مسار الـ Super Admin الخاص بكل منظومة */}
+        <Route path="/admin/organizations/:orgId" element={<AdminDashboard />} />
         <Route path="/instructor" element={<InstructorDashboard />} />
         <Route path="/student" element={<StudentDashboard />} />
       </Routes>
