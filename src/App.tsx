@@ -1,21 +1,23 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import ErrorBoundary from './components/errors/ErrorBoundary';
 import AdminDashboard from './pages/AdminDashboard';
 import InstructorDashboard from './pages/InstructorDashboard';
+import Login from './pages/Login';
+import NotFoundPage from './pages/NotFoundPage';
 import StudentDashboard from './pages/StudentDashboard';
 
 function App() {
-  return (
-    <Router>
+  return <Router>
+    <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Login />} />
-        {/* مسار الـ Super Admin الخاص بكل منظومة */}
         <Route path="/admin/organizations/:orgId" element={<AdminDashboard />} />
         <Route path="/instructor" element={<InstructorDashboard />} />
         <Route path="/student" element={<StudentDashboard />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </Router>
-  );
+    </ErrorBoundary>
+  </Router>;
 }
 
 export default App;
