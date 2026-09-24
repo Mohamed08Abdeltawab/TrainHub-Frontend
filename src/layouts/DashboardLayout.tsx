@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { dashboardContent } from '../config/dashboard';
 import { roleNavigation } from '../config/navigation';
+import { demoUsers } from '../config/demoUsers';
 import type { DashboardRole } from '../types/nav';
 import AppHeader from '../components/layout/AppHeader';
 import AppSidebar from '../components/layout/AppSidebar';
@@ -44,6 +45,7 @@ export default function DashboardLayout({
   error?: unknown;
   onRetry?: () => void;
 }) {
+  const routerNavigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [role, setRole] = useState<DashboardRole>(initialRole);
   const [collapsed, setCollapsed] = useState(false);
@@ -56,6 +58,10 @@ export default function DashboardLayout({
     navigation.find((item) => item.label === 'Overview') ??
     navigation[0];
   const active = activeItem?.label ?? 'Overview';
+
+  useEffect(() => {
+    setRole(initialRole);
+  }, [initialRole]);
 
   const navigate = (label: string) => {
     setSearchParams({ view: toViewKey(label) });
@@ -70,7 +76,12 @@ export default function DashboardLayout({
 
   const changeRole = (nextRole: DashboardRole) => {
     setRole(nextRole);
-    setSearchParams({ view: 'overview' });
+    const targetUser = demoUsers[nextRole];
+    if (targetUser?.path) {
+      routerNavigate(`${targetUser.path}?view=overview`);
+    } else {
+      setSearchParams({ view: 'overview' });
+    }
   };
 
   const openPrimarySection = () => {

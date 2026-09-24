@@ -1,4 +1,5 @@
-import { roleLabels } from '../../config/navigation';
+import { useNavigate } from 'react-router-dom';
+import { demoUsers, type DemoUser } from '../../config/demoUsers';
 import type { DashboardRole } from '../../types/nav';
 import {
   DropdownMenu,
@@ -10,10 +11,18 @@ import {
   DropdownMenuTrigger,
   Avatar,
   AvatarFallback,
+  Badge,
 } from '@/components/ui';
-import { Check, ChevronDown, Shield } from 'lucide-react';
-
-const roles: DashboardRole[] = ['SUPER_ADMIN', 'ORG_ADMIN', 'INSTRUCTOR', 'STUDENT'];
+import {
+  Check,
+  ChevronDown,
+  Shield,
+  Settings,
+  HelpCircle,
+  LogOut,
+  ArrowRightLeft,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Props = {
   role: DashboardRole;
@@ -32,9 +41,18 @@ export default function UserNav({
   onToggleProfileMenu,
   onSelectRole,
 }: Props) {
+  const navigate = useNavigate();
+  const activeUser = demoUsers[role] ?? demoUsers.ORG_ADMIN;
+  const userList = Object.values(demoUsers);
+
+  const handleSelectUser = (user: DemoUser) => {
+    onSelectRole(user.role);
+    navigate(`${user.path}?view=overview`);
+  };
+
   return (
     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-      {/* Role Switcher */}
+      {/* 1. Role & Demo User Switcher Button */}
       <DropdownMenu
         open={roleMenuOpen}
         onOpenChange={(nextOpen) => {
@@ -42,39 +60,81 @@ export default function UserNav({
         }}
       >
         <DropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              className="flex h-9 items-center gap-2 rounded-lg border border-border bg-card/80 px-2.5 text-xs text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Shield className="size-3.5 text-primary" aria-hidden="true" />
-              <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">Role:</span>
-              <span className="font-semibold text-primary">{role}</span>
-              <ChevronDown className="size-3 text-muted-foreground" aria-hidden="true" />
-            </button>
-          }
-        />
-        <DropdownMenuContent align="end" sideOffset={8} className="w-60 p-1.5 shadow-2xl">
-          <DropdownMenuLabel className="px-2.5 py-1.5 text-[11px] text-muted-foreground">
-            Switch role context (demo)
-          </DropdownMenuLabel>
+          className="group inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card/70 px-2.5 text-xs text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Shield className="size-3.5 text-primary" aria-hidden="true" />
+          <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">Role:</span>
+          <span className="font-semibold text-primary">{activeUser.roleTitle}</span>
+          <ChevronDown
+            className={cn(
+              'size-3 text-muted-foreground transition-transform duration-200',
+              roleMenuOpen && 'rotate-180 text-foreground'
+            )}
+            aria-hidden="true"
+          />
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-1.5 shadow-2xl">
+          <div className="px-2.5 py-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <ArrowRightLeft className="size-3.5 text-primary" />
+              Switch Demo User / Role
+            </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              Select any persona to view their permissions and dashboard
+            </p>
+          </div>
+
           <DropdownMenuSeparator />
+
           <DropdownMenuGroup>
-            {roles.map((option) => (
-              <DropdownMenuItem
-                key={option}
-                onClick={() => onSelectRole(option)}
-                className="flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-xs"
-              >
-                <span>{roleLabels[option]}</span>
-                {role === option && <Check className="size-3.5 text-primary" />}
-              </DropdownMenuItem>
-            ))}
+            {userList.map((user) => {
+              const isSelected = role === user.role;
+
+              return (
+                <DropdownMenuItem
+                  key={user.id}
+                  onClick={() => handleSelectUser(user)}
+                  className={cn(
+                    'flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 transition-colors',
+                    isSelected && 'bg-primary/10 font-medium'
+                  )}
+                >
+                  <Avatar className={cn('mt-0.5 size-7 text-[10px] font-bold text-white', user.avatarColor)}>
+                    <AvatarFallback className={cn('text-white', user.avatarColor)}>
+                      {user.initials}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-semibold text-foreground">{user.name}</p>
+                      {isSelected && (
+                        <Badge variant="default" className="px-1 py-0 text-[8px] uppercase">
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium text-primary">{user.roleTitle}</p>
+                    <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">
+                      {user.description}
+                    </p>
+                  </div>
+
+                  {isSelected && <Check className="mt-1 size-4 shrink-0 text-primary" />}
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+          <div className="px-2.5 py-1.5 text-[10px] text-muted-foreground/80">
+            Demo environment: Instant role switching enabled
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* User Profile */}
+      {/* 2. User Profile Menu */}
       <DropdownMenu
         open={profileMenuOpen}
         onOpenChange={(nextOpen) => {
@@ -82,35 +142,99 @@ export default function UserNav({
         }}
       >
         <DropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              aria-label="Open user profile"
-              className="rounded-full ring-2 ring-primary/20 transition hover:ring-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Avatar className="size-9 border border-border bg-primary text-xs font-semibold text-primary-foreground">
-                <AvatarFallback className="bg-primary text-primary-foreground">AM</AvatarFallback>
-              </Avatar>
-            </button>
-          }
-        />
-        <DropdownMenuContent align="end" sideOffset={8} className="w-64 p-3 shadow-2xl">
-          <div className="flex items-center gap-3 border-b border-border pb-3">
-            <Avatar className="size-10 bg-primary font-semibold text-primary-foreground">
-              <AvatarFallback className="bg-primary text-primary-foreground">AM</AvatarFallback>
+          aria-label="Open user profile menu"
+          className="rounded-full ring-2 ring-primary/20 transition hover:ring-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Avatar className={cn('size-9 border border-border text-xs font-bold text-white shadow-sm', activeUser.avatarColor)}>
+            <AvatarFallback className={cn('text-white', activeUser.avatarColor)}>
+              {activeUser.initials}
+            </AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" sideOffset={8} className="w-68 p-1.5 shadow-2xl">
+          {/* Active User Header */}
+          <div className="flex items-center gap-3 p-2.5">
+            <Avatar className={cn('size-10 text-xs font-bold text-white shadow-sm', activeUser.avatarColor)}>
+              <AvatarFallback className={cn('text-white', activeUser.avatarColor)}>
+                {activeUser.initials}
+              </AvatarFallback>
             </Avatar>
-            <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-foreground">Alex Morgan</p>
-              <p className="truncate text-[11px] text-muted-foreground">alex.morgan@example.com</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-foreground">{activeUser.name}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{activeUser.email}</p>
+              <Badge variant="default" className="mt-1 px-1.5 py-0 text-[9px] uppercase tracking-wider">
+                {activeUser.roleTitle}
+              </Badge>
             </div>
           </div>
-          <div className="pt-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Current role</p>
-            <p className="mt-1 text-xs font-medium text-primary">{roleLabels[role]}</p>
-            <p className="mt-2 text-[10px] leading-4 text-muted-foreground/80">
-              Profile details are demo content until authentication is connected.
-            </p>
-          </div>
+
+          <DropdownMenuSeparator />
+
+          {/* Quick Switch Demo User */}
+          <DropdownMenuLabel className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Switch Demo Account
+          </DropdownMenuLabel>
+
+          <DropdownMenuGroup>
+            {userList.map((user) => {
+              const isSelected = role === user.role;
+              return (
+                <DropdownMenuItem
+                  key={user.id}
+                  onClick={() => handleSelectUser(user)}
+                  className={cn(
+                    'flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-xs',
+                    isSelected && 'bg-primary/10 font-medium text-primary'
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn('grid size-5 place-items-center rounded-full text-[9px] font-bold text-white', user.avatarColor)}>
+                      {user.initials}
+                    </span>
+                    <span className="truncate text-foreground">{user.name}</span>
+                    <span className="text-[10px] text-muted-foreground">({user.roleTitle})</span>
+                  </div>
+                  {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+
+          {/* Settings & Help */}
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={() => onToggleProfileMenu()}
+              className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Settings className="size-3.5 text-muted-foreground" />
+              <span>Workspace Settings</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => onToggleProfileMenu()}
+              className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <HelpCircle className="size-3.5 text-muted-foreground" />
+              <span>Documentation & Support</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+
+          {/* Sign Out Action */}
+          <DropdownMenuItem
+            onClick={() => {
+              onToggleProfileMenu();
+              navigate('/');
+            }}
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
+          >
+            <LogOut className="size-3.5" />
+            <span>Sign out</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
