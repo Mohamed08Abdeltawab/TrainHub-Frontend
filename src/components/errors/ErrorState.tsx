@@ -1,5 +1,7 @@
 import { getErrorPresentation } from '../../utils/errorPresentation';
-import Button from '../ui/Button';
+import { Button, Card, CardContent } from '@/components/ui';
+import { AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Props = {
   title?: string;
@@ -10,16 +12,44 @@ type Props = {
   className?: string;
 };
 
-export default function ErrorState({ title, description, error, onRetry, retryLabel = 'Try again', className = '' }: Props) {
+export default function ErrorState({
+  title,
+  description,
+  error,
+  onRetry,
+  retryLabel = 'Try again',
+  className = '',
+}: Props) {
   const fallback = getErrorPresentation(error);
   const canRetry = Boolean(onRetry) && fallback.retryable;
 
-  return <section role="alert" aria-live="assertive" className={`rounded-xl border border-rose-500/25 bg-rose-500/5 p-6 sm:p-8 ${className}`}>
-    <div className="mx-auto flex max-w-lg flex-col items-center py-5 text-center">
-      <span className="grid h-11 w-11 place-items-center rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-300"><svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg></span>
-      <h2 className="mt-4 text-sm font-semibold text-white">{title ?? fallback.title}</h2>
-      <p className="mt-1.5 text-xs leading-5 text-zinc-400">{description ?? fallback.description}</p>
-      {canRetry && <Button variant="outline" size="sm" onClick={onRetry} className="mt-4">{retryLabel}</Button>}
-    </div>
-  </section>;
+  return (
+    <Card
+      role="alert"
+      aria-live="assertive"
+      className={cn('border-destructive/30 bg-destructive/5 p-0', className)}
+    >
+      <CardContent className="mx-auto flex max-w-lg flex-col items-center py-8 text-center">
+        <span className="grid size-11 place-items-center rounded-xl border border-destructive/30 bg-destructive/10 text-destructive">
+          <AlertCircle className="size-6" />
+        </span>
+        <h2 className="mt-4 text-sm font-semibold text-foreground">
+          {title ?? fallback.title}
+        </h2>
+        <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+          {description ?? fallback.description}
+        </p>
+        {canRetry && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRetry}
+            className="mt-4 border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+          >
+            {retryLabel}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
 }

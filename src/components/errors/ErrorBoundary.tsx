@@ -18,9 +18,18 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 text-zinc-100">
-        <div className="w-full max-w-xl"><ErrorState title="This page hit a problem" description="Reload the page to continue. If the problem persists, contact your workspace administrator." onRetry={() => window.location.reload()} retryLabel="Reload page" /></div>
-      </main>;
+      return (
+        <main className="flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
+          <div className="w-full max-w-xl">
+            <ErrorState
+              title="This page hit a problem"
+              description="Reload the page to continue. If the problem persists, contact your workspace administrator."
+              onRetry={() => window.location.reload()}
+              retryLabel="Reload page"
+            />
+          </div>
+        </main>
+      );
     }
 
     return this.props.children;

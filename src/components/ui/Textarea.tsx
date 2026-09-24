@@ -1,20 +1,19 @@
-import { forwardRef, useId, type TextareaHTMLAttributes } from 'react';
+import * as React from "react"
+import { cn } from "cn"
 
-type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; description?: string; error?: string };
+function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  return (
+    <textarea
+      data-slot="textarea"
+      className={cn(
+        "flex field-sizing-content min-h-16 w-full resize-none rounded-md border border-input bg-input/20 px-2 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 md:text-xs/relaxed dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
-const Textarea = forwardRef<HTMLTextAreaElement, Props>(function Textarea({ id, label, description, error, className = '', 'aria-describedby': describedBy, ...props }, ref) {
-  const generatedId = useId();
-  const inputId = id ?? generatedId;
-  const descriptionId = description ? `${inputId}-description` : undefined;
-  const errorId = error ? `${inputId}-error` : undefined;
-  const describedByIds = [describedBy, descriptionId, errorId].filter(Boolean).join(' ') || undefined;
+export default Textarea
+export { Textarea }
 
-  return <div className="space-y-1.5">
-    <label htmlFor={inputId} className="block text-xs font-medium text-zinc-300">{label}</label>
-    <textarea {...props} ref={ref} id={inputId} aria-invalid={error ? true : props['aria-invalid']} aria-describedby={describedByIds} className={`min-h-24 w-full resize-y rounded-lg border bg-zinc-900 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'border-rose-500/70 focus:border-rose-400 focus:ring-rose-500/20' : 'border-zinc-800 focus:border-indigo-500 focus:ring-indigo-500/20'} ${className}`} />
-    {description && <p id={descriptionId} className="text-[11px] text-zinc-500">{description}</p>}
-    {error && <p id={errorId} role="alert" className="text-[11px] text-rose-300">{error}</p>}
-  </div>;
-});
-
-export default Textarea;

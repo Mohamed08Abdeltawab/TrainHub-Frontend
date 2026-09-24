@@ -1,4 +1,7 @@
 import { useMemo } from 'react';
+import Button from './button';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Props = {
   currentPage: number;
@@ -35,18 +38,75 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
     if (nextPage >= 1 && nextPage <= pageCount && nextPage !== page) onPageChange(nextPage);
   };
 
-  const buttonClass = 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-zinc-700 px-2 text-xs text-zinc-300 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-40';
-
-  return <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3 text-[11px] text-zinc-500">
-    <p aria-live="polite">Showing {start}–{end} of {safeTotal}</p>
-    <div className="flex items-center gap-1.5">
-      <button type="button" aria-label="Go to first page" className={buttonClass} disabled={page <= 1} onClick={() => changePage(1)}>First</button>
-      <button type="button" aria-label="Go to previous page" className={buttonClass} disabled={page <= 1} onClick={() => changePage(page - 1)}>Previous</button>
-      {tokens.map((token) => typeof token === 'number'
-        ? <button key={token} type="button" aria-label={`Go to page ${token}`} aria-current={token === page ? 'page' : undefined} className={`${buttonClass} ${token === page ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-200' : ''}`} onClick={() => changePage(token)}>{token}</button>
-        : <span key={token} aria-hidden="true" className="px-1 text-zinc-600">…</span>)}
-      <button type="button" aria-label="Go to next page" className={buttonClass} disabled={pageCount === 0 || page >= pageCount} onClick={() => changePage(page + 1)}>Next</button>
-      <button type="button" aria-label="Go to last page" className={buttonClass} disabled={pageCount === 0 || page >= pageCount} onClick={() => changePage(pageCount)}>Last</button>
-    </div>
-  </nav>;
+  return (
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground">
+      <p aria-live="polite">Showing {start}–{end} of {safeTotal}</p>
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          aria-label="Go to first page"
+          disabled={page <= 1}
+          onClick={() => changePage(1)}
+          className="size-7 p-0"
+        >
+          <ChevronsLeft className="size-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          aria-label="Go to previous page"
+          disabled={page <= 1}
+          onClick={() => changePage(page - 1)}
+          className="size-7 p-0"
+        >
+          <ChevronLeft className="size-3.5" />
+        </Button>
+        {tokens.map((token, index) =>
+          typeof token === 'number' ? (
+            <Button
+              key={token}
+              type="button"
+              variant={token === page ? 'primary' : 'outline'}
+              size="xs"
+              aria-label={`Go to page ${token}`}
+              aria-current={token === page ? 'page' : undefined}
+              className={cn('size-7 p-0 font-medium', token === page ? 'shadow-sm' : '')}
+              onClick={() => changePage(token)}
+            >
+              {token}
+            </Button>
+          ) : (
+            <span key={`ellipsis-${index}`} aria-hidden="true" className="px-1 text-muted-foreground/60">
+              …
+            </span>
+          )
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          aria-label="Go to next page"
+          disabled={pageCount === 0 || page >= pageCount}
+          onClick={() => changePage(page + 1)}
+          className="size-7 p-0"
+        >
+          <ChevronRight className="size-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          aria-label="Go to last page"
+          disabled={pageCount === 0 || page >= pageCount}
+          onClick={() => changePage(pageCount)}
+          className="size-7 p-0"
+        >
+          <ChevronsRight className="size-3.5" />
+        </Button>
+      </div>
+    </nav>
+  );
 }
