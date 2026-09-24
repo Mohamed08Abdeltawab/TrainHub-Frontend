@@ -33,7 +33,7 @@ export default function NotificationMenu({
   ].filter((notice) => notice.target);
 
   return (
-    <Popover open={open} onOpenChange={() => onToggle()}>
+    <Popover open={open} onOpenChange={(nextOpen) => { if (nextOpen !== open) onToggle(); }}>
       <PopoverTrigger
         render={
           <button

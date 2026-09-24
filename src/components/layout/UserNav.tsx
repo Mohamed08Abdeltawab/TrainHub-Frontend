@@ -35,7 +35,12 @@ export default function UserNav({
   return (
     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
       {/* Role Switcher */}
-      <DropdownMenu open={roleMenuOpen} onOpenChange={() => onToggleRoleMenu()}>
+      <DropdownMenu
+        open={roleMenuOpen}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen !== roleMenuOpen) onToggleRoleMenu();
+        }}
+      >
         <DropdownMenuTrigger
           render={
             <button
@@ -70,7 +75,12 @@ export default function UserNav({
       </DropdownMenu>
 
       {/* User Profile */}
-      <DropdownMenu open={profileMenuOpen} onOpenChange={() => onToggleProfileMenu()}>
+      <DropdownMenu
+        open={profileMenuOpen}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen !== profileMenuOpen) onToggleProfileMenu();
+        }}
+      >
         <DropdownMenuTrigger
           render={
             <button
