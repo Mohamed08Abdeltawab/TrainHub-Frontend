@@ -9,7 +9,9 @@ import LayoutIcon from '../components/layout/LayoutIcon';
 import MobileNav from '../components/layout/MobileNav';
 import DashboardSkeleton from '../components/ui/DashboardSkeleton';
 import PageLoading from '../components/ui/PageLoading';
-import { Badge, Button, Card, EmptyState } from '../components/ui';
+import { Badge, Button, Card, DataTable, EmptyState, type DataTableColumn } from '../components/ui';
+
+type DashboardRow = { title: string; detail: string; status: string };
 import ErrorState from '../components/errors/ErrorState';
 
 export type { DashboardRole } from '../types/nav';
@@ -50,6 +52,11 @@ export default function DashboardLayout({ initialRole = 'ORG_ADMIN', children, l
     if (item) navigate(item.label);
   };
 
+  const tableColumns: DataTableColumn<DashboardRow>[] = [
+    { key: 'title', header: 'Course or organization', sortValue: (row) => row.title, cell: (row) => <div className="min-w-0"><p className="truncate font-semibold text-zinc-200">{row.title}</p><p className="mt-1 truncate text-[11px] text-zinc-500">{row.detail}</p></div> },
+    { key: 'status', header: 'Status', sortValue: (row) => row.status, cell: (row) => <Badge variant={/upcoming|review/i.test(row.status) ? 'warning' : /complete/i.test(row.status) ? 'default' : 'success'}>{row.status}</Badge> },
+  ];
+
   return <div className="flex h-screen min-h-[600px] overflow-hidden bg-zinc-950 font-sans text-zinc-100 selection:bg-indigo-500/30 selection:text-indigo-100">
     <aside className={`hidden shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950 transition-[width] duration-300 md:flex ${collapsed ? 'w-16' : 'w-64'}`}>
       <AppSidebar role={role} section={content.section} items={navigation} active={active} collapsed={collapsed} onCollapse={() => setCollapsed((value) => !value)} onNavigate={navigate} />
@@ -77,7 +84,7 @@ export default function DashboardLayout({ initialRole = 'ORG_ADMIN', children, l
             <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(260px,0.8fr)]">
               <Card className="p-4 sm:p-5">
                 <div className="mb-4 flex items-center justify-between"><div><h2 className="text-sm font-semibold text-white">{content.tableTitle}</h2><p className="mt-1 text-xs text-zinc-500">{content.subtitle}</p></div><Button variant="ghost" size="sm" onClick={openPrimarySection}>View all <span aria-hidden="true">→</span></Button></div>
-                <div className="space-y-2">{content.rows.map((row) => <Card key={row.title} interactive className="flex items-center justify-between gap-3 border-zinc-800/80 bg-zinc-950/60 p-3"><div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-500/10 text-indigo-300"><LayoutIcon icon="courses" /></span><div className="min-w-0"><p className="truncate text-xs font-semibold text-zinc-200">{row.title}</p><p className="mt-1 truncate text-[11px] text-zinc-500">{row.detail}</p></div></div><Badge className="shrink-0">{row.status}</Badge></Card>)}</div>
+                <DataTable columns={tableColumns} rows={content.rows} rowKey={(row) => row.title} caption={content.tableTitle} pageSize={5} emptyTitle="No activity yet" emptyDescription="New activity will appear here." />
               </Card>
               <Card className="p-4 sm:p-5"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold text-white">Your workspace</h2><Badge variant="success">Active</Badge></div><p className="mt-3 text-xs font-semibold text-indigo-200">{content.scope}</p><p className="mt-1 text-xs leading-5 text-zinc-400">Your access and tools are organized around your role.</p><ul className="mt-4 space-y-3">{content.capabilities.map((capability) => <li key={capability} className="flex items-start gap-2 text-xs text-zinc-300"><span className="mt-0.5 text-emerald-400">✓</span>{capability}</li>)}</ul></Card>
             </div>

@@ -1,6 +1,20 @@
 import { z } from 'zod'
 
 export const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid Email!' }),
-  password: z.string().min(6, { message: 'The password must be at least 6 characters long.' }),
+  email: z.string().trim().email({ message: 'Enter a valid email address.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+})
+
+export const registerSchema = z.object({
+  name: z.string().trim().min(2, { message: 'Enter your name.' }),
+  email: z.string().trim().email({ message: 'Enter a valid email address.' }),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+  confirmPassword: z.string(),
+}).refine((values) => values.password === values.confirmPassword, {
+  message: 'Passwords do not match.',
+  path: ['confirmPassword'],
+})
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email({ message: 'Enter a valid email address.' }),
 })
