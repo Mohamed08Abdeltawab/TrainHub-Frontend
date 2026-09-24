@@ -105,8 +105,8 @@ export default function AppHeader({
           role={role}
           roleMenuOpen={openMenu === 'role'}
           profileMenuOpen={openMenu === 'profile'}
-          onToggleRoleMenu={() => toggleMenu('role')}
-          onToggleProfileMenu={() => toggleMenu('profile')}
+          onToggleRoleMenu={(open) => setOpenMenu(open ? 'role' : null)}
+          onToggleProfileMenu={(open) => setOpenMenu(open ? 'profile' : null)}
           onSelectRole={chooseRole}
         />
       </div>

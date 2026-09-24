@@ -26,11 +26,11 @@ import { cn } from '@/lib/utils';
 
 type Props = {
   role: DashboardRole;
-  roleMenuOpen: boolean;
-  profileMenuOpen: boolean;
-  onToggleRoleMenu: () => void;
-  onToggleProfileMenu: () => void;
   onSelectRole: (role: DashboardRole) => void;
+  roleMenuOpen?: boolean;
+  profileMenuOpen?: boolean;
+  onToggleRoleMenu?: (open: boolean) => void;
+  onToggleProfileMenu?: (open: boolean) => void;
 };
 
 export default function UserNav({
@@ -50,14 +50,19 @@ export default function UserNav({
     navigate(`${user.path}?view=overview`);
   };
 
+  const isRoleControlled = roleMenuOpen !== undefined && typeof onToggleRoleMenu === 'function';
+  const isProfileControlled = profileMenuOpen !== undefined && typeof onToggleProfileMenu === 'function';
+
   return (
     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
       {/* 1. Role & Demo User Switcher Button */}
       <DropdownMenu
-        open={roleMenuOpen}
-        onOpenChange={(nextOpen) => {
-          if (nextOpen !== roleMenuOpen) onToggleRoleMenu();
-        }}
+        {...(isRoleControlled
+          ? {
+              open: roleMenuOpen,
+              onOpenChange: onToggleRoleMenu,
+            }
+          : {})}
       >
         <DropdownMenuTrigger
           className="group inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card/70 px-2.5 text-xs text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -67,7 +72,7 @@ export default function UserNav({
           <span className="font-semibold text-primary">{activeUser.roleTitle}</span>
           <ChevronDown
             className={cn(
-              'size-3 text-muted-foreground transition-transform duration-200',
+              'size-3 text-muted-foreground transition-transform duration-200 group-data-open:rotate-180 group-data-open:text-foreground group-aria-expanded:rotate-180',
               roleMenuOpen && 'rotate-180 text-foreground'
             )}
             aria-hidden="true"
@@ -136,14 +141,16 @@ export default function UserNav({
 
       {/* 2. User Profile Menu */}
       <DropdownMenu
-        open={profileMenuOpen}
-        onOpenChange={(nextOpen) => {
-          if (nextOpen !== profileMenuOpen) onToggleProfileMenu();
-        }}
+        {...(isProfileControlled
+          ? {
+              open: profileMenuOpen,
+              onOpenChange: onToggleProfileMenu,
+            }
+          : {})}
       >
         <DropdownMenuTrigger
           aria-label="Open user profile menu"
-          className="rounded-full ring-2 ring-primary/20 transition hover:ring-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="cursor-pointer rounded-full ring-2 ring-primary/20 transition hover:ring-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className={cn('size-9 border border-border text-xs font-bold text-white shadow-sm', activeUser.avatarColor)}>
             <AvatarFallback className={cn('text-white', activeUser.avatarColor)}>
@@ -172,11 +179,11 @@ export default function UserNav({
           <DropdownMenuSeparator />
 
           {/* Quick Switch Demo User */}
-          <DropdownMenuLabel className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Switch Demo Account
-          </DropdownMenuLabel>
-
           <DropdownMenuGroup>
+            <DropdownMenuLabel className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              Switch Demo Account
+            </DropdownMenuLabel>
+
             {userList.map((user) => {
               const isSelected = role === user.role;
               return (
@@ -206,7 +213,6 @@ export default function UserNav({
           {/* Settings & Help */}
           <DropdownMenuGroup>
             <DropdownMenuItem
-              onClick={() => onToggleProfileMenu()}
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
             >
               <Settings className="size-3.5 text-muted-foreground" />
@@ -214,7 +220,6 @@ export default function UserNav({
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              onClick={() => onToggleProfileMenu()}
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
             >
               <HelpCircle className="size-3.5 text-muted-foreground" />
@@ -227,7 +232,6 @@ export default function UserNav({
           {/* Sign Out Action */}
           <DropdownMenuItem
             onClick={() => {
-              onToggleProfileMenu();
               navigate('/');
             }}
             className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
