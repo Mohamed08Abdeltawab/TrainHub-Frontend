@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { NavItem } from '../../types/nav';
-import { Popover, PopoverContent, PopoverTrigger, Button } from '@/components/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui';
 import { Bell } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 

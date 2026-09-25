@@ -1,37 +1,67 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import ErrorBoundary from './components/errors/ErrorBoundary';
-import AdminDashboard from './pages/AdminDashboard';
-import InstructorDashboard from './pages/InstructorDashboard';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import NotFoundPage from './pages/NotFoundPage';
-import StudentDashboard from './pages/StudentDashboard';
-import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
-import { Link } from 'react-router-dom';
-import AuthLayout from './layouts/AuthLayout';
-import { Button } from './components/ui';
-import { useLanguage } from './i18n/LanguageContext';
+import PageLoading from './components/ui/PageLoading';
+import { ROUTES } from './config/routes';
+
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const InstructorDashboard = lazy(() => import('./pages/InstructorDashboard'));
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const DashboardSection = lazy(() => import('./features/dashboard/components/DashboardSection'));
 
 function App() {
-  const { t } = useLanguage();
-  return <Router>
-    <AuthProvider>
-    <ErrorBoundary>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/admin/organizations/:orgId" element={<ProtectedRoute roles={['ORG_ADMIN', 'SUPER_ADMIN']}><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/instructor" element={<ProtectedRoute roles={['INSTRUCTOR']}><InstructorDashboard /></ProtectedRoute>} />
-        <Route path="/student" element={<ProtectedRoute roles={['STUDENT']}><StudentDashboard /></ProtectedRoute>} />
-        <Route path="/unauthorized" element={<AuthLayout title="Access denied" description="Your current account does not have access to this workspace."><Link to="/"><Button variant="primary" className="w-full">{t('Return to sign in')}</Button></Link></AuthLayout>} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </ErrorBoundary>
-    </AuthProvider>
-  </Router>;
+  return (
+    <Router>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoading label="Loading TrainHub..." />}>
+          <Routes>
+            <Route path={ROUTES.LOGIN} element={<Login />} />
+            <Route path={ROUTES.REGISTER} element={<Register />} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
+            <Route
+              path={ROUTES.ADMIN_DASHBOARD}
+              element={
+                <ProtectedRoute roles={['ORG_ADMIN', 'SUPER_ADMIN']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path=":section" element={<DashboardSection />} />
+            </Route>
+            <Route
+              path={ROUTES.INSTRUCTOR_DASHBOARD}
+              element={
+                <ProtectedRoute roles={['INSTRUCTOR', 'SUPER_ADMIN']}>
+                  <InstructorDashboard />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path=":section" element={<DashboardSection />} />
+            </Route>
+            <Route
+              path={ROUTES.STUDENT_DASHBOARD}
+              element={
+                <ProtectedRoute roles={['STUDENT', 'SUPER_ADMIN']}>
+                  <StudentDashboard />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path=":section" element={<DashboardSection />} />
+            </Route>
+            <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
+    </Router>
+  );
 }
 
 export default App;

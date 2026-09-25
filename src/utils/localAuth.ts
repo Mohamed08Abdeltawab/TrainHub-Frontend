@@ -36,8 +36,13 @@ export async function createLocalAccount(account: NewLocalAccount) {
       return { ok: false as const, message: 'An account with this email already exists. Sign in instead.' };
     }
     const passwordHash = await hashPassword(account.password);
-    const { password: _password, ...profile } = account;
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify([...accounts, { ...profile, passwordHash }]));
+    const profile: LocalAccount = {
+      name: account.name,
+      organization: account.organization,
+      email: account.email,
+      passwordHash,
+    };
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify([...accounts, profile]));
     return { ok: true as const };
   } catch {
     return { ok: false as const, message: 'Your account could not be saved in this browser. Check your browser storage settings and try again.' };

@@ -6,10 +6,10 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from './card';
+} from './Card';
 import { cn } from '@/lib/utils';
 
-type Props = HTMLAttributes<HTMLElement> & {
+type Props = HTMLAttributes<HTMLDivElement> & {
   title: string;
   description?: string;
   children: ReactNode;
@@ -25,7 +25,7 @@ export default function FormSection({
   ...props
 }: Props) {
   return (
-    <Card className={cn('p-0 overflow-hidden', className)} {...(props as any)}>
+    <Card className={cn('p-0 overflow-hidden', className)} {...props}>
       <CardHeader className="border-b border-border px-4 py-4 sm:px-5">
         <CardTitle className="text-sm font-semibold text-foreground">{title}</CardTitle>
         {description && (

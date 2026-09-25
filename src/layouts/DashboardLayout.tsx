@@ -1,325 +1,78 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { dashboardContent } from '../config/dashboard';
-import { roleNavigation } from '../config/navigation';
-import { demoUsers } from '../config/demoUsers';
-import type { DashboardRole } from '../types/nav';
-import AppHeader from '../components/layout/AppHeader';
-import AppSidebar from '../components/layout/AppSidebar';
-import LayoutIcon from '../components/layout/LayoutIcon';
-import MobileNav from '../components/layout/MobileNav';
-import DashboardSkeleton from '../components/ui/DashboardSkeleton';
-import PageLoading from '../components/ui/PageLoading';
-import ErrorState from '../components/errors/ErrorState';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  DataTable,
-  EmptyState,
-  type DataTableColumn,
-} from '@/components/ui';
-import { ArrowRight, Check, Plus } from 'lucide-react';
-import { useAuth } from '../auth/AuthContext';
-import { useLanguage } from '../i18n/LanguageContext';
+import type { ReactNode } from 'react';
+import { Outlet, useOutletContext } from 'react-router-dom';
+import { dashboardContent } from '@/config/dashboard';
+import type { DashboardContent, DashboardRole, NavItem } from '@/types/nav';
+import DashboardShell from '@/components/layout/DashboardShell';
+import { useDashboardNav } from '@/features/dashboard/hooks/useDashboardNav';
 
-type DashboardRow = { title: string; detail: string; status: string };
+export type { DashboardRole } from '@/types/nav';
 
-export type { DashboardRole } from '../types/nav';
+/** Context passed from DashboardLayout to child route components via <Outlet>. */
+export type DashboardOutletContext = {
+  content: DashboardContent;
+  role: DashboardRole;
+  active: string;
+  activeItem: NavItem | undefined;
+  navigate: (label: string) => void;
+  openPrimarySection: () => void;
+};
 
-const toViewKey = (label: string) =>
-  label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+/** Convenience hook for child route components to consume the dashboard context. */
+export function useDashboardContext() {
+  return useOutletContext<DashboardOutletContext>();
+}
 
 export default function DashboardLayout({
   initialRole = 'ORG_ADMIN',
+  basePath,
   children,
-  loading = false,
-  error,
-  onRetry,
 }: {
   initialRole?: DashboardRole;
+  basePath: string;
   children?: ReactNode;
-  loading?: boolean;
-  error?: unknown;
-  onRetry?: () => void;
 }) {
-  const routerNavigate = useNavigate();
-  const { enterDemo } = useAuth();
-  const { t, direction } = useLanguage();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [role, setRole] = useState<DashboardRole>(initialRole);
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const {
+    role,
+    collapsed,
+    setCollapsed,
+    mobileOpen,
+    setMobileOpen,
+    navigation,
+    active,
+    activeItem,
+    navigate,
+    changeRole,
+    openPrimarySection,
+  } = useDashboardNav(initialRole, basePath);
+
   const content = dashboardContent[role];
-  const navigation = roleNavigation[role];
-  const requestedView = searchParams.get('view');
-  const activeItem =
-    navigation.find((item) => toViewKey(item.label) === requestedView) ??
-    navigation.find((item) => item.label === 'Overview') ??
-    navigation[0];
-  const active = activeItem?.label ?? 'Overview';
 
-  useEffect(() => {
-    setRole(initialRole);
-  }, [initialRole]);
-
-  const navigate = (label: string) => {
-    setSearchParams({ view: toViewKey(label) });
-    setMobileOpen(false);
+  const outletContext: DashboardOutletContext = {
+    content,
+    role,
+    active,
+    activeItem,
+    navigate,
+    openPrimarySection,
   };
-
-  useEffect(() => {
-    if (requestedView !== null && !navigation.some((item) => toViewKey(item.label) === requestedView)) {
-      setSearchParams({ view: toViewKey(active) }, { replace: true });
-    }
-  }, [active, navigation, requestedView, setSearchParams]);
-
-  const changeRole = (nextRole: DashboardRole) => {
-    enterDemo(nextRole);
-    setRole(nextRole);
-    const targetUser = demoUsers[nextRole];
-    if (targetUser?.path) {
-      routerNavigate(`${targetUser.path}?view=overview`);
-    } else {
-      setSearchParams({ view: 'overview' });
-    }
-  };
-
-  const openPrimarySection = () => {
-    const item =
-      navigation.find((entry) => /courses|organizations/i.test(entry.label)) ??
-      navigation[0];
-    if (item) navigate(item.label);
-  };
-
-  const tableColumns: DataTableColumn<DashboardRow>[] = [
-    {
-      key: 'title',
-      header: 'Course or organization',
-      sortValue: (row) => row.title,
-      cell: (row) => (
-        <div className="min-w-0">
-          <p className="truncate font-semibold text-foreground">{row.title}</p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{row.detail}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      sortValue: (row) => row.status,
-      cell: (row) => (
-        <Badge
-          variant={
-            /upcoming|review/i.test(row.status)
-              ? 'warning'
-              : /complete/i.test(row.status)
-              ? 'default'
-              : 'success'
-          }
-        >
-          {row.status}
-        </Badge>
-      ),
-    },
-  ];
 
   return (
-    <div className="flex h-screen min-h-[600px] overflow-hidden bg-background font-sans text-foreground selection:bg-primary/25">
-      <aside
-        className={`hidden shrink-0 flex-col border-r border-border bg-card/40 transition-[width] duration-300 rtl:border-l rtl:border-r-0 md:flex ${
-          collapsed ? 'w-16' : 'w-64'
-        }`}
-      >
-        <AppSidebar
-          role={role}
-          section={content.section}
-          items={navigation}
-          active={active}
-          collapsed={collapsed}
-          onCollapse={() => setCollapsed((value) => !value)}
-          onNavigate={navigate}
-        />
-      </aside>
-
-      <MobileNav
-        open={mobileOpen}
-        role={role}
-        section={content.section}
-        items={navigation}
-        active={active}
-        onClose={() => setMobileOpen(false)}
-        onNavigate={navigate}
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background/50">
-        <AppHeader
-          role={role}
-          tenant={content.tenant}
-          plan={content.plan}
-          section={content.section}
-          page={active}
-          items={navigation}
-          onNavigate={navigate}
-          onOpenMobileNav={() => setMobileOpen(true)}
-          onSelectRole={changeRole}
-        />
-
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <Badge variant="default" className="mb-2 px-2.5 py-0.5 text-[10px]">
-                  {t(content.section)} {t('workspace')}
-                </Badge>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                  {active === 'Overview' ? t(content.title) : t(active)}
-                </h1>
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  {active === 'Overview'
-                    ? t(content.description)
-                    : `${t('Manage')} ${t(active.toLowerCase())} ${t('in your')} ${content.tenant} ${t('workspace')}.`}
-                </p>
-              </div>
-              {active === 'Overview' && (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={openPrimarySection}
-                  leadingIcon={<Plus className="size-4" />}
-                >
-                  {t(content.action)}
-                </Button>
-              )}
-            </div>
-
-            {error ? (
-              <ErrorState error={error} onRetry={onRetry} />
-            ) : loading ? (
-              active === 'Overview' ? (
-                <DashboardSkeleton />
-              ) : (
-                <PageLoading label={`${t('Loading')} ${t(active.toLowerCase())}...`} />
-              )
-            ) : active === 'Overview' ? (
-              <>
-                <section
-                  aria-label="Key metrics"
-                  className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
-                >
-                  {content.metrics.map((metric, index) => (
-                    <Card
-                      key={metric.label}
-                      className="flex flex-col justify-between border-border bg-card/60 p-4 shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {t(metric.label)}
-                        </span>
-                        <span
-                          className={`grid size-8 place-items-center rounded-lg ${
-                            [
-                              'bg-primary/15 text-primary',
-                              'bg-sky-500/15 text-sky-400',
-                              'bg-emerald-500/15 text-emerald-400',
-                              'bg-amber-500/15 text-amber-400',
-                            ][index]
-                          }`}
-                        >
-                          <LayoutIcon
-                            icon={
-                              ['overview', 'courses', 'reports', 'assignments'][
-                                index
-                              ] as 'overview' | 'courses' | 'reports' | 'assignments'
-                            }
-                          />
-                        </span>
-                      </div>
-                      <div className="mt-3">
-                        <p className="text-2xl font-bold tracking-tight text-foreground">
-                          {metric.value}
-                        </p>
-                        <p className="mt-1 text-[11px] text-muted-foreground">{t(metric.note)}</p>
-                      </div>
-                    </Card>
-                  ))}
-                </section>
-
-                <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(260px,0.8fr)]">
-                  <Card className="border-border bg-card/60 p-0 shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between px-5 pt-5 pb-3">
-                      <div>
-                        <CardTitle className="text-sm font-semibold text-foreground">
-                          {t(content.tableTitle)}
-                        </CardTitle>
-                        <CardDescription className="mt-0.5 text-xs text-muted-foreground">
-                          {t(content.subtitle)}
-                        </CardDescription>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={openPrimarySection}>
-                        {t('View all')} <ArrowRight className={`size-3.5 ${direction === 'rtl' ? 'rotate-180' : ''}`} />
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="px-5 pb-5">
-                      <DataTable
-                        columns={tableColumns}
-                        rows={content.rows.map((row) => ({ ...row, detail: t(row.detail), status: t(row.status) }))}
-                        rowKey={(row) => row.title}
-                        caption={t(content.tableTitle)}
-                        pageSize={5}
-                        emptyTitle="No activity yet"
-                        emptyDescription="New activity will appear here."
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-border bg-card/60 p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-semibold text-foreground">{t('Your workspace')}</h2>
-                      <Badge variant="success">{t('Active')}</Badge>
-                    </div>
-                    <p className="mt-3 text-xs font-semibold text-primary">{t(content.scope)}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      {t('Your access and tools are organized around your role.')}
-                    </p>
-                    <ul className="mt-4 space-y-3">
-                      {content.capabilities.map((capability) => (
-                        <li key={capability} className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-400" />
-                          <span className="text-foreground/90">{t(capability)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                </div>
-              </>
-            ) : (
-              <Card aria-live="polite" className="border-border bg-card/60 p-6 sm:p-8">
-                <EmptyState
-                  icon={
-                    <LayoutIcon
-                      icon={activeItem?.icon ?? 'overview'}
-                      className="size-5 text-primary"
-                    />
-                  }
-                  title={active}
-                  description={`${t('You are viewing the')} ${t(active.toLowerCase())} ${t('section for the')} ${t(content.section.toLowerCase())} ${t('workspace')}.`}
-                  action={
-                    <Button variant="outline" size="sm" onClick={() => navigate('Overview')}>
-                      {t('Back to overview')}
-                    </Button>
-                  }
-                />
-              </Card>
-            )}
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    <DashboardShell
+      role={role}
+      content={content}
+      navigation={navigation}
+      active={active}
+      collapsed={collapsed}
+      mobileOpen={mobileOpen}
+      onCollapse={() => setCollapsed((value) => !value)}
+      onOpenMobileNav={() => setMobileOpen(true)}
+      onCloseMobileNav={() => setMobileOpen(false)}
+      onNavigate={navigate}
+      onSelectRole={changeRole}
+      onPrimaryAction={openPrimarySection}
+    >
+      <Outlet context={outletContext} />
+      {children}
+    </DashboardShell>
   );
 }

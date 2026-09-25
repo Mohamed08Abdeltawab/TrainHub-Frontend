@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import Button from './button';
+import Button from './Button';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../../i18n/LanguageContext';

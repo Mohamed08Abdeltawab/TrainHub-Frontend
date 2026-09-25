@@ -30,9 +30,14 @@ export default function Register() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
 
-  const onSubmit: SubmitHandler<RegisterValues> = async ({ confirmPassword: _confirmPassword, ...values }) => {
+  const onSubmit: SubmitHandler<RegisterValues> = async (values) => {
     setError('');
-    const result = await createLocalAccount(values);
+    const result = await createLocalAccount({
+      name: values.name,
+      organization: values.organization,
+      email: values.email,
+      password: values.password,
+    });
     if (!result.ok) {
       setError(t(result.message));
       return;

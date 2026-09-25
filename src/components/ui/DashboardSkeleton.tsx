@@ -1,5 +1,5 @@
-import { Card } from './card';
-import { Skeleton } from './skeleton';
+import { Card } from './Card';
+import { Skeleton } from './Skeleton';
 
 export default function DashboardSkeleton() {
   return (

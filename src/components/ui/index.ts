@@ -1,6 +1,6 @@
-export { Alert, AlertTitle, AlertDescription, AlertAction, alertVariants } from './alert';
-export { Badge, badgeVariants } from './badge';
-export { Button, buttonVariants } from './button';
+export { Alert, AlertTitle, AlertDescription, AlertAction, alertVariants } from './Alert';
+export { Badge, badgeVariants } from './Badge';
+export { Button, buttonVariants } from './Button';
 export {
   Card,
   CardHeader,
@@ -8,9 +8,9 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
-} from './card';
-export { Checkbox } from './checkbox';
-export { Input } from './input';
+} from './Card';
+export { Checkbox } from './Checkbox';
+export { Input } from './Input';
 export { Label } from './label';
 export { default as Modal } from './Modal';
 export {
@@ -75,9 +75,9 @@ export {
   TooltipContent,
   TooltipProvider,
 } from './tooltip';
-export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from './select';
-export { Textarea } from './textarea';
-export { Skeleton } from './skeleton';
+export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from './Select';
+export { Textarea } from './Textarea';
+export { Skeleton } from './Skeleton';
 export { default as Spinner } from './Spinner';
 export { default as EmptyState } from './EmptyState';
 export { default as FormSection } from './FormSection';
