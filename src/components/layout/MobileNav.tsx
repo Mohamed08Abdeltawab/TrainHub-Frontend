@@ -6,6 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 type Props = {
   open: boolean;
@@ -26,11 +27,12 @@ export default function MobileNav({
   onClose,
   onNavigate,
 }: Props) {
+  const { direction, t } = useLanguage();
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <SheetContent
-        side="left"
-        className="flex w-72 flex-col gap-0 border-r border-border bg-card p-0 md:hidden"
+        side={direction === 'rtl' ? 'right' : 'left'}
+        className="flex w-72 flex-col gap-0 border-r border-border bg-card p-0 md:hidden rtl:border-l rtl:border-r-0"
       >
         <SheetHeader className="flex h-16 shrink-0 flex-row items-center border-b border-border px-4 py-0 space-y-0">
           <div className="flex items-center gap-2.5">
@@ -56,8 +58,8 @@ export default function MobileNav({
         </div>
 
         <div className="border-t border-border px-4 py-3 text-[11px] text-muted-foreground">
-          <p className="font-medium text-foreground">Multi-Tenant Training Suite</p>
-          <p>TrainHub workspace</p>
+          <p className="font-medium text-foreground">{t('Multi-Tenant Training Suite')}</p>
+          <p>{t('TrainHub workspace')}</p>
         </div>
       </SheetContent>
     </Sheet>

@@ -8,17 +8,17 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-indigo-500/30 bg-indigo-500/15 text-indigo-300 [a]:hover:bg-indigo-500/25",
+        default: "border-indigo-500/30 bg-indigo-500/15 text-indigo-300 light:border-indigo-300 light:bg-indigo-100 light:text-indigo-800 [a]:hover:bg-indigo-500/25",
         secondary:
           "border-border bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
-          "border-rose-500/30 bg-rose-500/15 text-rose-300 focus-visible:ring-rose-500/20 [a]:hover:bg-rose-500/25",
+          "border-rose-500/30 bg-rose-500/15 text-rose-300 light:border-rose-300 light:bg-rose-100 light:text-rose-800 focus-visible:ring-rose-500/20 [a]:hover:bg-rose-500/25",
         danger:
-          "border-rose-500/30 bg-rose-500/15 text-rose-300 focus-visible:ring-rose-500/20 [a]:hover:bg-rose-500/25",
+          "border-rose-500/30 bg-rose-500/15 text-rose-300 light:border-rose-300 light:bg-rose-100 light:text-rose-800 focus-visible:ring-rose-500/20 [a]:hover:bg-rose-500/25",
         success:
-          "border-emerald-500/30 bg-emerald-500/15 text-emerald-300 focus-visible:ring-emerald-500/20 [a]:hover:bg-emerald-500/25",
+          "border-emerald-500/30 bg-emerald-500/15 text-emerald-300 light:border-emerald-300 light:bg-emerald-100 light:text-emerald-800 focus-visible:ring-emerald-500/20 [a]:hover:bg-emerald-500/25",
         warning:
-          "border-amber-500/30 bg-amber-500/15 text-amber-300 focus-visible:ring-amber-500/20 [a]:hover:bg-amber-500/25",
+          "border-amber-500/30 bg-amber-500/15 text-amber-300 light:border-amber-300 light:bg-amber-100 light:text-amber-900 focus-visible:ring-amber-500/20 [a]:hover:bg-amber-500/25",
         outline:
           "border-border bg-transparent text-muted-foreground [a]:hover:bg-muted [a]:hover:text-foreground",
         ghost:

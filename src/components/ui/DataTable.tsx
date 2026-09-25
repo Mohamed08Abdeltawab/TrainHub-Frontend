@@ -104,7 +104,7 @@ export default function DataTable<T>({
                           onClick={() => toggleSort(column)}
                           aria-label={`Sort by ${String(column.header)}`}
                           aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
-                          className="inline-flex items-center gap-1.5 text-left transition hover:text-foreground"
+                          className="inline-flex items-center gap-1.5 text-start transition hover:text-foreground"
                         >
                           {column.header}
                           <span aria-hidden="true" className="text-muted-foreground">

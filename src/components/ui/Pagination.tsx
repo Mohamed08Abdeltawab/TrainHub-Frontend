@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import Button from './button';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 type Props = {
   currentPage: number;
@@ -26,6 +27,7 @@ function getPageTokens(currentPage: number, pageCount: number, siblingCount: num
 }
 
 export default function Pagination({ currentPage, totalItems, pageSize, onPageChange, siblingCount = 1 }: Props) {
+  const { direction, t } = useLanguage();
   const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 1;
   const safeTotal = Number.isFinite(totalItems) && totalItems > 0 ? Math.floor(totalItems) : 0;
   const pageCount = Math.ceil(safeTotal / safePageSize);
@@ -39,30 +41,30 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
   };
 
   return (
-    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground">
-      <p aria-live="polite">Showing {start}–{end} of {safeTotal}</p>
+    <nav aria-label={t('Pagination')} className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground">
+      <p aria-live="polite"><span>{t('Showing')}</span> <bdi>{start}–{end}</bdi> <span>{t('of')}</span> <bdi>{safeTotal}</bdi></p>
       <div className="flex items-center gap-1">
         <Button
           type="button"
           variant="outline"
           size="xs"
-          aria-label="Go to first page"
+          aria-label={t('Go to first page')}
           disabled={page <= 1}
           onClick={() => changePage(1)}
           className="size-7 p-0"
         >
-          <ChevronsLeft className="size-3.5" />
+          {direction === 'rtl' ? <ChevronsRight className="size-3.5" /> : <ChevronsLeft className="size-3.5" />}
         </Button>
         <Button
           type="button"
           variant="outline"
           size="xs"
-          aria-label="Go to previous page"
+          aria-label={t('Go to previous page')}
           disabled={page <= 1}
           onClick={() => changePage(page - 1)}
           className="size-7 p-0"
         >
-          <ChevronLeft className="size-3.5" />
+          {direction === 'rtl' ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
         </Button>
         {tokens.map((token, index) =>
           typeof token === 'number' ? (
@@ -71,7 +73,7 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
               type="button"
               variant={token === page ? 'primary' : 'outline'}
               size="xs"
-              aria-label={`Go to page ${token}`}
+              aria-label={`${t('Go to page')} ${token}`}
               aria-current={token === page ? 'page' : undefined}
               className={cn('size-7 p-0 font-medium', token === page ? 'shadow-sm' : '')}
               onClick={() => changePage(token)}
@@ -88,23 +90,23 @@ export default function Pagination({ currentPage, totalItems, pageSize, onPageCh
           type="button"
           variant="outline"
           size="xs"
-          aria-label="Go to next page"
+          aria-label={t('Go to next page')}
           disabled={pageCount === 0 || page >= pageCount}
           onClick={() => changePage(page + 1)}
           className="size-7 p-0"
         >
-          <ChevronRight className="size-3.5" />
+          {direction === 'rtl' ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
         </Button>
         <Button
           type="button"
           variant="outline"
           size="xs"
-          aria-label="Go to last page"
+          aria-label={t('Go to last page')}
           disabled={pageCount === 0 || page >= pageCount}
           onClick={() => changePage(pageCount)}
           className="size-7 p-0"
         >
-          <ChevronsRight className="size-3.5" />
+          {direction === 'rtl' ? <ChevronsLeft className="size-3.5" /> : <ChevronsRight className="size-3.5" />}
         </Button>
       </div>
     </nav>

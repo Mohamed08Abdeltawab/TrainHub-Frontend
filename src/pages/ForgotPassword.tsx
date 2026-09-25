@@ -5,11 +5,13 @@ import { Link } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import { Alert, Button, Input } from '@/components/ui';
 import { forgotPasswordSchema } from '../validators/authValidator';
+import { useLanguage } from '../i18n/LanguageContext';
 
 type ForgotPasswordValues = { email: string };
 
 export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false);
+  const { t } = useLanguage();
   const {
     register,
     handleSubmit,
@@ -31,11 +33,11 @@ export default function ForgotPassword() {
       >
         <Input
           {...register('email')}
-          label="Email address"
+          label={t('Email address')}
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          error={errors.email?.message}
+          error={errors.email?.message ? t(errors.email.message) : undefined}
         />
         <Button
           type="submit"
@@ -43,14 +45,14 @@ export default function ForgotPassword() {
           size="lg"
           className="w-full"
           loading={isSubmitting}
-          loadingLabel="Sending request..."
+          loadingLabel={t('Sending request...')}
         >
-          Send reset link
+          {t('Send reset link')}
         </Button>
       </form>
       {submitted && (
         <Alert className="mt-4" variant="info">
-          Your email is valid. Password reset is not connected yet.
+          {t('Your email is valid. Password reset is not connected yet.')}
         </Alert>
       )}
       <p className="mt-5 text-center text-xs text-muted-foreground">
@@ -58,7 +60,7 @@ export default function ForgotPassword() {
           to="/"
           className="font-medium text-primary transition-colors hover:underline"
         >
-          Back to sign in
+          {t('Back to sign in')}
         </Link>
       </p>
     </AuthLayout>

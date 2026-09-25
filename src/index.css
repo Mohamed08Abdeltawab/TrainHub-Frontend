@@ -1,6 +1,9 @@
 @import "@fontsource-variable/inter";
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant light (&:where([data-theme=light], [data-theme=light] *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -53,6 +56,31 @@
   --destructive-foreground: #ffffff;
   --border: #27272a;
   --input: #27272a;
+  --ring: #6366f1;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: #f4f6fb;
+  --foreground: #181a24;
+  --card: #ffffff;
+  --card-foreground: #181a24;
+  --popover: #ffffff;
+  --popover-foreground: #181a24;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #e7eaf2;
+  --secondary-foreground: #252938;
+  --muted: #e9ecf3;
+  --muted-foreground: #626a7c;
+  --accent: #e9ecf3;
+  --accent-foreground: #252938;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+  --border: #d9deea;
+  --input: #e9edf5;
   --ring: #6366f1;
   background: var(--background);
   color: var(--foreground);
