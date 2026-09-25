@@ -5,23 +5,41 @@ import { Link } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import { Alert, Button, Input } from '@/components/ui';
 import { registerSchema } from '../validators/authValidator';
+import { createLocalAccount } from '../utils/localAuth';
+import { Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
 
 type RegisterValues = {
   name: string;
+  organization: string;
   email: string;
   password: string;
   confirmPassword: string;
 };
 
 export default function Register() {
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [created, setCreated] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
 
-  const onSubmit: SubmitHandler<RegisterValues> = () => setSubmitted(true);
+  const onSubmit: SubmitHandler<RegisterValues> = async ({ confirmPassword: _confirmPassword, ...values }) => {
+    setError('');
+    const result = await createLocalAccount(values);
+    if (!result.ok) {
+      setError(t(result.message));
+      return;
+    }
+    setCreated(true);
+    window.setTimeout(() => navigate('/', { state: { registeredEmail: values.email } }), 900);
+  };
 
   return (
     <AuthLayout
@@ -30,40 +48,53 @@ export default function Register() {
     >
       <form
         onSubmit={handleSubmit(onSubmit)}
-        onChange={() => setSubmitted(false)}
+        onChange={() => { setError(''); setCreated(false); }}
         noValidate
         className="space-y-4"
       >
         <Input
           {...register('name')}
-          label="Full name"
+          label={t('Full name')}
           autoComplete="name"
-          placeholder="Your name"
-          error={errors.name?.message}
+          placeholder={t('Your name')}
+          error={errors.name?.message ? t(errors.name.message) : undefined}
+        />
+        <Input
+          {...register('organization')}
+          label={t('Training center')}
+          autoComplete="organization"
+          placeholder={t('Your organization name')}
+          error={errors.organization?.message ? t(errors.organization.message) : undefined}
         />
         <Input
           {...register('email')}
-          label="Work email"
+          label={t('Work email')}
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          error={errors.email?.message}
+          error={errors.email?.message ? t(errors.email.message) : undefined}
         />
-        <Input
-          {...register('password')}
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          description="Use at least 8 characters."
-          error={errors.password?.message}
-        />
+        <div className="relative">
+          <Input
+            {...register('password')}
+            label={t('Password')}
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            description={t('Use at least 8 characters.')}
+            className="pe-10"
+            error={errors.password?.message ? t(errors.password.message) : undefined}
+          />
+          <button type="button" onClick={() => setShowPassword((shown) => !shown)} className="absolute end-2 top-[1.375rem] flex h-10 w-8 items-center justify-center text-muted-foreground" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
         <Input
           {...register('confirmPassword')}
-          label="Confirm password"
+          label={t('Confirm password')}
           type="password"
           autoComplete="new-password"
-          placeholder="Enter your password again"
-          error={errors.confirmPassword?.message}
+          placeholder={t('Enter your password again')}
+          error={errors.confirmPassword?.message ? t(errors.confirmPassword.message) : undefined}
         />
         <Button
           type="submit"
@@ -71,23 +102,20 @@ export default function Register() {
           size="lg"
           className="w-full"
           loading={isSubmitting}
-          loadingLabel="Creating account..."
+          loadingLabel={t('Creating account...')}
         >
-          Create account
+          {t('Create account')}
         </Button>
       </form>
-      {submitted && (
-        <Alert className="mt-4" variant="info">
-          Your details are valid. Account creation is not connected yet.
-        </Alert>
-      )}
+      {error && <Alert className="mt-4" variant="error">{error}</Alert>}
+      {created && <Alert className="mt-4" variant="success">{t('Account created. Taking you to sign in…')}</Alert>}
       <p className="mt-5 text-center text-xs text-muted-foreground">
-        Already have an account?{' '}
+        {t('Already have an account?')}{' '}
         <Link
           to="/"
           className="font-medium text-primary transition-colors hover:underline"
         >
-          Sign in
+          {t('Sign in')}
         </Link>
       </p>
     </AuthLayout>

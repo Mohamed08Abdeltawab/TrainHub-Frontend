@@ -24,6 +24,8 @@ import {
   type DataTableColumn,
 } from '@/components/ui';
 import { ArrowRight, Check, Plus } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
+import { useLanguage } from '../i18n/LanguageContext';
 
 type DashboardRow = { title: string; detail: string; status: string };
 
@@ -46,6 +48,8 @@ export default function DashboardLayout({
   onRetry?: () => void;
 }) {
   const routerNavigate = useNavigate();
+  const { enterDemo } = useAuth();
+  const { t, direction } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [role, setRole] = useState<DashboardRole>(initialRole);
   const [collapsed, setCollapsed] = useState(false);
@@ -75,6 +79,7 @@ export default function DashboardLayout({
   }, [active, navigation, requestedView, setSearchParams]);
 
   const changeRole = (nextRole: DashboardRole) => {
+    enterDemo(nextRole);
     setRole(nextRole);
     const targetUser = demoUsers[nextRole];
     if (targetUser?.path) {
@@ -126,7 +131,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen min-h-[600px] overflow-hidden bg-background font-sans text-foreground selection:bg-primary/25">
       <aside
-        className={`hidden shrink-0 flex-col border-r border-border bg-card/40 transition-[width] duration-300 md:flex ${
+        className={`hidden shrink-0 flex-col border-r border-border bg-card/40 transition-[width] duration-300 rtl:border-l rtl:border-r-0 md:flex ${
           collapsed ? 'w-16' : 'w-64'
         }`}
       >
@@ -169,15 +174,15 @@ export default function DashboardLayout({
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <Badge variant="default" className="mb-2 px-2.5 py-0.5 text-[10px]">
-                  {content.section} workspace
+                  {t(content.section)} {t('workspace')}
                 </Badge>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                  {active === 'Overview' ? content.title : active}
+                  {active === 'Overview' ? t(content.title) : t(active)}
                 </h1>
                 <p className="mt-1.5 text-sm text-muted-foreground">
                   {active === 'Overview'
-                    ? content.description
-                    : `Manage ${active.toLowerCase()} in your ${content.tenant} workspace.`}
+                    ? t(content.description)
+                    : `${t('Manage')} ${t(active.toLowerCase())} ${t('in your')} ${content.tenant} ${t('workspace')}.`}
                 </p>
               </div>
               {active === 'Overview' && (
@@ -187,7 +192,7 @@ export default function DashboardLayout({
                   onClick={openPrimarySection}
                   leadingIcon={<Plus className="size-4" />}
                 >
-                  {content.action}
+                  {t(content.action)}
                 </Button>
               )}
             </div>
@@ -198,7 +203,7 @@ export default function DashboardLayout({
               active === 'Overview' ? (
                 <DashboardSkeleton />
               ) : (
-                <PageLoading label={`Loading ${active.toLowerCase()}...`} />
+                <PageLoading label={`${t('Loading')} ${t(active.toLowerCase())}...`} />
               )
             ) : active === 'Overview' ? (
               <>
@@ -213,7 +218,7 @@ export default function DashboardLayout({
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-muted-foreground">
-                          {metric.label}
+                          {t(metric.label)}
                         </span>
                         <span
                           className={`grid size-8 place-items-center rounded-lg ${
@@ -238,7 +243,7 @@ export default function DashboardLayout({
                         <p className="text-2xl font-bold tracking-tight text-foreground">
                           {metric.value}
                         </p>
-                        <p className="mt-1 text-[11px] text-muted-foreground">{metric.note}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">{t(metric.note)}</p>
                       </div>
                     </Card>
                   ))}
@@ -249,22 +254,22 @@ export default function DashboardLayout({
                     <CardHeader className="flex flex-row items-center justify-between px-5 pt-5 pb-3">
                       <div>
                         <CardTitle className="text-sm font-semibold text-foreground">
-                          {content.tableTitle}
+                          {t(content.tableTitle)}
                         </CardTitle>
                         <CardDescription className="mt-0.5 text-xs text-muted-foreground">
-                          {content.subtitle}
+                          {t(content.subtitle)}
                         </CardDescription>
                       </div>
                       <Button variant="ghost" size="sm" onClick={openPrimarySection}>
-                        View all <ArrowRight className="size-3.5" />
+                        {t('View all')} <ArrowRight className={`size-3.5 ${direction === 'rtl' ? 'rotate-180' : ''}`} />
                       </Button>
                     </CardHeader>
                     <CardContent className="px-5 pb-5">
                       <DataTable
                         columns={tableColumns}
-                        rows={content.rows}
+                        rows={content.rows.map((row) => ({ ...row, detail: t(row.detail), status: t(row.status) }))}
                         rowKey={(row) => row.title}
-                        caption={content.tableTitle}
+                        caption={t(content.tableTitle)}
                         pageSize={5}
                         emptyTitle="No activity yet"
                         emptyDescription="New activity will appear here."
@@ -274,18 +279,18 @@ export default function DashboardLayout({
 
                   <Card className="border-border bg-card/60 p-5 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-semibold text-foreground">Your workspace</h2>
-                      <Badge variant="success">Active</Badge>
+                      <h2 className="text-sm font-semibold text-foreground">{t('Your workspace')}</h2>
+                      <Badge variant="success">{t('Active')}</Badge>
                     </div>
-                    <p className="mt-3 text-xs font-semibold text-primary">{content.scope}</p>
+                    <p className="mt-3 text-xs font-semibold text-primary">{t(content.scope)}</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      Your access and tools are organized around your role.
+                      {t('Your access and tools are organized around your role.')}
                     </p>
                     <ul className="mt-4 space-y-3">
                       {content.capabilities.map((capability) => (
                         <li key={capability} className="flex items-start gap-2 text-xs text-muted-foreground">
                           <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-400" />
-                          <span className="text-foreground/90">{capability}</span>
+                          <span className="text-foreground/90">{t(capability)}</span>
                         </li>
                       ))}
                     </ul>
@@ -302,10 +307,10 @@ export default function DashboardLayout({
                     />
                   }
                   title={active}
-                  description={`You are viewing the ${active.toLowerCase()} section for the ${content.section.toLowerCase()} workspace.`}
+                  description={`${t('You are viewing the')} ${t(active.toLowerCase())} ${t('section for the')} ${t(content.section.toLowerCase())} ${t('workspace')}.`}
                   action={
                     <Button variant="outline" size="sm" onClick={() => navigate('Overview')}>
-                      Back to overview
+                      {t('Back to overview')}
                     </Button>
                   }
                 />

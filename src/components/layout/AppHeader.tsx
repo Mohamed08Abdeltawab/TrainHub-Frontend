@@ -6,6 +6,9 @@ import OrgBadge from './OrgBadge';
 import UserNav from './UserNav';
 import { Button, Separator } from '@/components/ui';
 import { ChevronRight, Menu } from 'lucide-react';
+import LanguageToggle from './LanguageToggle';
+import { useLanguage } from '../../i18n/LanguageContext';
+import ThemeToggle from './ThemeToggle';
 
 type OpenMenu = 'role' | 'profile' | 'notifications' | null;
 
@@ -33,6 +36,7 @@ export default function AppHeader({
   onSelectRole,
 }: Props) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
+  const { t, direction } = useLanguage();
 
   const toggleMenu = useCallback((menu: Exclude<OpenMenu, null>) => {
     setOpenMenu((current) => (current === menu ? null : menu));
@@ -81,17 +85,19 @@ export default function AppHeader({
           className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
         >
           <span className="transition-colors hover:text-foreground">TrainHub</span>
-          <ChevronRight className="size-3 text-muted-foreground/60" aria-hidden="true" />
-          <span className="transition-colors hover:text-foreground">{section}</span>
-          <ChevronRight className="size-3 text-muted-foreground/60" aria-hidden="true" />
+          <ChevronRight className={`size-3 text-muted-foreground/60 ${direction === 'rtl' ? 'rotate-180' : ''}`} aria-hidden="true" />
+          <span className="transition-colors hover:text-foreground">{t(section)}</span>
+          <ChevronRight className={`size-3 text-muted-foreground/60 ${direction === 'rtl' ? 'rotate-180' : ''}`} aria-hidden="true" />
           <span className="font-semibold text-foreground" aria-current="page">
-            {page}
+            {t(page)}
           </span>
         </nav>
       </div>
 
       {/* Right side: Search, Notifications, Role & User Navigation */}
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <ThemeToggle />
+        <LanguageToggle />
         <HeaderSearch items={items} onNavigate={openSection} />
 
         <NotificationMenu

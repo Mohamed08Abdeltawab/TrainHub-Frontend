@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import { Button } from '@/components/ui';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <AuthLayout
@@ -13,7 +15,7 @@ export default function NotFoundPage() {
       <div className="text-center">
         <p className="text-6xl font-bold tracking-tight text-primary">404</p>
         <p className="mt-3 text-sm text-muted-foreground">
-          The link may be incorrect, or the page may have moved.
+          {t('The link may be incorrect, or the page may have moved.')}
         </p>
         <Button
           type="button"
@@ -21,7 +23,7 @@ export default function NotFoundPage() {
           onClick={() => navigate('/')}
           className="mt-6 w-full"
         >
-          Return to sign in
+          {t('Return to sign in')}
         </Button>
       </div>
     </AuthLayout>

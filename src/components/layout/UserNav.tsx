@@ -12,6 +12,8 @@ import {
   Avatar,
   AvatarFallback,
   Badge,
+  Button,
+  Modal,
 } from '@/components/ui';
 import {
   Check,
@@ -23,6 +25,9 @@ import {
   ArrowRightLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '../../auth/AuthContext';
+import { useState } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 type Props = {
   role: DashboardRole;
@@ -42,7 +47,12 @@ export default function UserNav({
   onSelectRole,
 }: Props) {
   const navigate = useNavigate();
-  const activeUser = demoUsers[role] ?? demoUsers.ORG_ADMIN;
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const { user: authUser, signOut } = useAuth();
+  const { t } = useLanguage();
+  const activeUser = authUser
+    ? { ...(demoUsers[authUser.role] ?? demoUsers.ORG_ADMIN), name: authUser.name, email: authUser.email, role: authUser.role }
+    : demoUsers[role] ?? demoUsers.ORG_ADMIN;
   const userList = Object.values(demoUsers);
 
   const handleSelectUser = (user: DemoUser) => {
@@ -68,8 +78,8 @@ export default function UserNav({
           className="group inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card/70 px-2.5 text-xs text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Shield className="size-3.5 text-primary" aria-hidden="true" />
-          <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">Role:</span>
-          <span className="font-semibold text-primary">{activeUser.roleTitle}</span>
+          <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">{t('Role:')}</span>
+          <span className="font-semibold text-primary">{t(activeUser.roleTitle)}</span>
           <ChevronDown
             className={cn(
               'size-3 text-muted-foreground transition-transform duration-200 group-data-open:rotate-180 group-data-open:text-foreground group-aria-expanded:rotate-180',
@@ -83,10 +93,10 @@ export default function UserNav({
           <div className="px-2.5 py-2">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
               <ArrowRightLeft className="size-3.5 text-primary" />
-              Switch Demo User / Role
+              {t('Switch Demo User / Role')}
             </p>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              Select any persona to view their permissions and dashboard
+              {t('Select any persona to view their permissions and dashboard')}
             </p>
           </div>
 
@@ -120,7 +130,7 @@ export default function UserNav({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-[11px] font-medium text-primary">{user.roleTitle}</p>
+                    <p className="text-[11px] font-medium text-primary">{t(user.roleTitle)}</p>
                     <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">
                       {user.description}
                     </p>
@@ -134,7 +144,7 @@ export default function UserNav({
 
           <DropdownMenuSeparator />
           <div className="px-2.5 py-1.5 text-[10px] text-muted-foreground/80">
-            Demo environment: Instant role switching enabled
+              {t('Demo environment: Instant role switching enabled')}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -171,7 +181,7 @@ export default function UserNav({
               <p className="truncate text-xs font-semibold text-foreground">{activeUser.name}</p>
               <p className="truncate text-[11px] text-muted-foreground">{activeUser.email}</p>
               <Badge variant="default" className="mt-1 px-1.5 py-0 text-[9px] uppercase tracking-wider">
-                {activeUser.roleTitle}
+                {t(activeUser.roleTitle)}
               </Badge>
             </div>
           </div>
@@ -181,7 +191,7 @@ export default function UserNav({
           {/* Quick Switch Demo User */}
           <DropdownMenuGroup>
             <DropdownMenuLabel className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-              Switch Demo Account
+              {t('Switch Demo Account')}
             </DropdownMenuLabel>
 
             {userList.map((user) => {
@@ -200,7 +210,7 @@ export default function UserNav({
                       {user.initials}
                     </span>
                     <span className="truncate text-foreground">{user.name}</span>
-                    <span className="text-[10px] text-muted-foreground">({user.roleTitle})</span>
+                    <span className="text-[10px] text-muted-foreground">({t(user.roleTitle)})</span>
                   </div>
                   {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
                 </DropdownMenuItem>
@@ -216,14 +226,14 @@ export default function UserNav({
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
             >
               <Settings className="size-3.5 text-muted-foreground" />
-              <span>Workspace Settings</span>
+              <span>{t('Workspace Settings')}</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
             >
               <HelpCircle className="size-3.5 text-muted-foreground" />
-              <span>Documentation & Support</span>
+              <span>{t('Documentation & Support')}</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
 
@@ -231,16 +241,29 @@ export default function UserNav({
 
           {/* Sign Out Action */}
           <DropdownMenuItem
-            onClick={() => {
-              navigate('/');
-            }}
+            onClick={() => setLogoutOpen(true)}
             className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
           >
             <LogOut className="size-3.5" />
-            <span>Sign out</span>
+            <span>{t('Sign out')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <Modal
+        open={logoutOpen}
+        onClose={() => setLogoutOpen(false)}
+        title={t('Sign out?')}
+        description={t('You will need to sign in again to access your workspace.')}
+        size="sm"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setLogoutOpen(false)}>{t('Cancel')}</Button>
+            <Button variant="destructive" onClick={() => { signOut(); setLogoutOpen(false); navigate('/', { replace: true }); }}>{t('Sign out')}</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">{t('Are you sure you want to end this session?')}</p>
+      </Modal>
     </div>
   );
 }

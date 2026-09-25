@@ -12,6 +12,7 @@ import {
   CommandSeparator,
 } from '@/components/ui';
 import { Search, CornerDownLeft, Compass } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 type Props = {
   items: NavItem[];
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function HeaderSearch({ items, onNavigate }: Props) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   // Detect platform for appropriate keyboard shortcut label (Mac vs Windows/Linux)
@@ -52,7 +54,7 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
         variant="ghost"
         size="icon"
         onClick={() => setOpen(true)}
-        aria-label="Search sections"
+        aria-label={t('Search sections...')}
         className="size-9 text-muted-foreground hover:text-foreground md:hidden"
       >
         <Search className="size-4" aria-hidden="true" />
@@ -66,8 +68,8 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
         className="group hidden h-9 items-center gap-2 rounded-lg border border-border bg-card/60 px-3 text-xs text-muted-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:flex"
       >
         <Search className="size-3.5 transition-colors group-hover:text-primary" aria-hidden="true" />
-        <span className="font-normal">Search sections...</span>
-        <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-0.5 rounded border border-border bg-muted/70 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+        <span className="font-normal">{t('Search sections...')}</span>
+        <kbd className="pointer-events-none ms-2 inline-flex h-5 select-none items-center gap-0.5 rounded border border-border bg-muted/70 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           {isMac ? '⌘' : 'Ctrl'} K
         </kbd>
       </button>
@@ -76,17 +78,17 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title="Quick Navigation"
-        description="Search and jump to workspace sections available for your role."
+        title={t('Quick Navigation')}
+        description={t('Search and jump to workspace sections available for your role.')}
       >
-        <CommandInput placeholder="Search workspace sections..." />
+        <CommandInput placeholder={t('Search workspace sections...')} />
         <CommandList>
           <CommandEmpty className="flex flex-col items-center justify-center gap-2 py-8 text-center text-xs text-muted-foreground">
             <Compass className="size-6 text-muted-foreground/60" />
-            <p>No matching workspace sections found.</p>
+            <p>{t('No matching workspace sections found.')}</p>
           </CommandEmpty>
 
-          <CommandGroup heading="Available Sections">
+          <CommandGroup heading={t('Available Sections')}>
             {items.map((item) => (
               <CommandItem
                 key={item.label}
@@ -97,9 +99,9 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
                 <span className="grid size-7 place-items-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
                   <LayoutIcon icon={item.icon} className="size-3.5" />
                 </span>
-                <span className="flex-1 font-medium text-foreground">{item.label}</span>
+                <span className="flex-1 font-medium text-foreground">{t(item.label)}</span>
                 <span className="flex items-center gap-1 text-[11px] text-muted-foreground opacity-0 transition group-hover:opacity-100">
-                  Select <CornerDownLeft className="size-3" />
+                  {t('Select')} <CornerDownLeft className="size-3" />
                 </span>
               </CommandItem>
             ))}
@@ -109,10 +111,10 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
         <CommandSeparator />
 
         <div className="flex items-center justify-between px-3 py-2 text-[10px] text-muted-foreground">
-          <span>Sections accessible based on active role</span>
+          <span>{t('Sections accessible based on active role')}</span>
           <div className="hidden items-center gap-2 sm:flex">
             <span>
-              <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[9px]">ESC</kbd> to close
+              <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[9px]">ESC</kbd> {t('to close')}
             </span>
           </div>
         </div>

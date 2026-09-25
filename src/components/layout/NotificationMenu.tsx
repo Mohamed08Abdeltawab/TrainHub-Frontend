@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { NavItem } from '../../types/nav';
 import { Popover, PopoverContent, PopoverTrigger, Button } from '@/components/ui';
 import { Bell } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export default function NotificationMenu({
   open,
@@ -14,6 +15,7 @@ export default function NotificationMenu({
   items: NavItem[];
   onNavigate: (label: string) => void;
 }) {
+  const { t } = useLanguage();
   const [cleared, setCleared] = useState(false);
   const activityItem =
     items.find((item) => /assignments|reports|courses/i.test(item.label)) ?? items[0];
@@ -55,8 +57,8 @@ export default function NotificationMenu({
       >
         <div className="flex items-center justify-between border-b border-border px-2.5 py-2">
           <div>
-            <h2 className="text-xs font-semibold text-foreground">Notifications</h2>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">Workspace updates</p>
+            <h2 className="text-xs font-semibold text-foreground">{t('Notifications')}</h2>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">{t('Workspace updates')}</p>
           </div>
           {!cleared && (
             <button
@@ -64,7 +66,7 @@ export default function NotificationMenu({
               onClick={() => setCleared(true)}
               className="text-[10px] font-medium text-primary hover:underline"
             >
-              Mark all read
+              {t('Mark all read')}
             </button>
           )}
         </div>
@@ -80,7 +82,7 @@ export default function NotificationMenu({
                     onToggle();
                   }
                 }}
-                className="flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left transition hover:bg-muted"
+                className="flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-start transition hover:bg-muted"
               >
                 <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
                 <span>
@@ -96,7 +98,7 @@ export default function NotificationMenu({
           </div>
         ) : (
           <p className="px-3 py-8 text-center text-xs text-muted-foreground">
-            You’re all caught up.
+            {t('You’re all caught up.')}
           </p>
         )}
       </PopoverContent>
