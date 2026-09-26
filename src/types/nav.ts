@@ -3,6 +3,7 @@ export type DashboardRole = 'SUPER_ADMIN' | 'ORG_ADMIN' | 'INSTRUCTOR' | 'STUDEN
 export type NavItem = {
   label: string;
   icon: 'overview' | 'courses' | 'learners' | 'settings' | 'calendar' | 'reports' | 'organization' | 'assignments';
+  group?: string;
 };
 
 export type DashboardMetric = { label: string; value: string; note: string };

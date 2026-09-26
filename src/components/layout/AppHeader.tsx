@@ -114,6 +114,7 @@ export default function AppHeader({
           onToggleRoleMenu={(open) => setOpenMenu(open ? 'role' : null)}
           onToggleProfileMenu={(open) => setOpenMenu(open ? 'profile' : null)}
           onSelectRole={chooseRole}
+          onNavigate={openSection}
         />
       </div>
     </header>

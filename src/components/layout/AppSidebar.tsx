@@ -29,6 +29,13 @@ export default function AppSidebar({
 }: Props) {
   const { t, direction } = useLanguage();
   const showLabels = mobile || !collapsed;
+  const groups = items.reduce<{ label: string; items: NavItem[] }[]>((result, item) => {
+    const label = item.group ?? '';
+    const previous = result[result.length - 1];
+    if (previous?.label === label) previous.items.push(item);
+    else result.push({ label, items: [item] });
+    return result;
+  }, []);
   const brandMark = (
     <span
       className={cn(
@@ -92,43 +99,48 @@ export default function AppSidebar({
             {t(section)}
           </h2>
         )}
-        {items.map((item) => {
-          const isActive = active === item.label;
-          const buttonElement = (
-            <button
-              type="button"
-              key={item.label}
-              onClick={() => onNavigate(item.label)}
-              aria-current={isActive ? 'page' : undefined}
-              className={cn(
-                'group flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-start text-xs font-medium transition',
-                isActive
-                  ? 'bg-muted text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                !showLabels && 'justify-center px-0'
-              )}
-            >
-              <LayoutIcon
-                icon={item.icon}
-                className={cn('size-4 shrink-0 transition-colors', isActive ? 'text-primary' : 'group-hover:text-primary')}
-              />
-              {showLabels && <span className="truncate">{t(item.label)}</span>}
-            </button>
-          );
+        {groups.map((group, groupIndex) => (
+          <div key={`${group.label || 'default'}-${groupIndex}`} role="group" aria-label={group.label ? t(group.label) : undefined} className={groupIndex ? 'mt-4 border-t border-border/70 pt-3' : ''}>
+            {group.label && showLabels && <h3 className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t(group.label)}</h3>}
+            {group.items.map((item) => {
+              const isActive = active === item.label;
+              const buttonElement = (
+                <button
+                  type="button"
+                  key={item.label}
+                  onClick={() => onNavigate(item.label)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'group flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-start text-xs font-medium transition',
+                    isActive
+                      ? 'bg-muted text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                    !showLabels && 'justify-center px-0'
+                  )}
+                >
+                  <LayoutIcon
+                    icon={item.icon}
+                    className={cn('size-4 shrink-0 transition-colors', isActive ? 'text-primary' : 'group-hover:text-primary')}
+                  />
+                  {showLabels && <span className="truncate">{t(item.label)}</span>}
+                </button>
+              );
 
-          if (!showLabels) {
-            return (
-              <Tooltip key={item.label}>
-                <TooltipTrigger render={buttonElement} />
-                <TooltipContent side={direction === 'rtl' ? 'left' : 'right'} className="text-xs">
-                  {t(item.label)}
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
+              if (!showLabels) {
+                return (
+                  <Tooltip key={item.label}>
+                    <TooltipTrigger render={buttonElement} />
+                    <TooltipContent side={direction === 'rtl' ? 'left' : 'right'} className="text-xs">
+                      {t(item.label)}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
 
-          return buttonElement;
-        })}
+              return buttonElement;
+            })}
+          </div>
+        ))}
       </nav>
 
       {showLabels && (

@@ -11,6 +11,10 @@ export type AuthUser = {
   organization?: string;
   role: DashboardRole;
   demo?: boolean;
+  jobTitle?: string;
+  phone?: string;
+  timezone?: string;
+  bio?: string;
 };
 
 type AuthContextValue = {
@@ -18,6 +22,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<'success' | 'invalid' | 'unavailable'>;
   enterDemo: (role: DashboardRole) => void;
   signOut: () => void;
+  updateProfile: (updates: Pick<AuthUser, 'name' | 'jobTitle' | 'phone' | 'timezone' | 'bio'>) => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -64,6 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut() {
       try { localStorage.removeItem('token'); } catch { /* Ignore unavailable storage. */ }
       saveSession(null);
+    },
+    updateProfile(updates) {
+      if (!user) return false;
+      const nextUser = { ...user, ...updates };
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
+        setUser(nextUser);
+        return true;
+      } catch { return false; }
     },
   }), [user]);
 

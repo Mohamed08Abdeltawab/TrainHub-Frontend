@@ -14,7 +14,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 type LoginValues = { email: string; password: string };
 
 const demoLinks = [
-  { label: 'Organization admin', to: '/admin/organizations/demo', role: 'ORG_ADMIN' as DashboardRole },
+  { label: 'Organization Admin', to: '/admin/organizations/demo', role: 'ORG_ADMIN' as DashboardRole },
   { label: 'Instructor', to: '/instructor', role: 'INSTRUCTOR' as DashboardRole },
   { label: 'Learner', to: '/student', role: 'STUDENT' as DashboardRole },
 ];

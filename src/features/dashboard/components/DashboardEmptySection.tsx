@@ -28,7 +28,7 @@ export default function DashboardEmptySection({
           />
         }
         title={t(active)}
-        description={`${t('You are viewing the')} ${t(active.toLowerCase())} ${t('section for the')} ${t(section.toLowerCase())} ${t('workspace')}.`}
+        description={`${t('You are viewing the')} ${t(active)} ${t('section for the')} ${t(section)} ${t('Workspace')}.`}
         action={
           <Button variant="outline" size="sm" onClick={onNavigateOverview}>
             {t('Back to overview')}

@@ -23,6 +23,7 @@ import {
   HelpCircle,
   LogOut,
   ArrowRightLeft,
+  UserRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '../../auth/AuthContext';
@@ -32,6 +33,7 @@ import { useLanguage } from '../../i18n/LanguageContext';
 type Props = {
   role: DashboardRole;
   onSelectRole: (role: DashboardRole) => void;
+  onNavigate: (label: string) => void;
   roleMenuOpen?: boolean;
   profileMenuOpen?: boolean;
   onToggleRoleMenu?: (open: boolean) => void;
@@ -45,6 +47,7 @@ export default function UserNav({
   onToggleRoleMenu,
   onToggleProfileMenu,
   onSelectRole,
+  onNavigate,
 }: Props) {
   const navigate = useNavigate();
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -188,6 +191,14 @@ export default function UserNav({
 
           <DropdownMenuSeparator />
 
+          <DropdownMenuItem
+            onClick={() => onNavigate('User profile')}
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <UserRound className="size-3.5" />
+            <span>{t('User profile')}</span>
+          </DropdownMenuItem>
+
           {/* Quick Switch Demo User */}
           <DropdownMenuGroup>
             <DropdownMenuLabel className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -222,12 +233,13 @@ export default function UserNav({
 
           {/* Settings & Help */}
           <DropdownMenuGroup>
-            <DropdownMenuItem
+            {role === 'ORG_ADMIN' && <DropdownMenuItem
+              onClick={() => onNavigate('Organization settings')}
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
             >
               <Settings className="size-3.5 text-muted-foreground" />
-              <span>{t('Workspace Settings')}</span>
-            </DropdownMenuItem>
+              <span>{t('Organization settings')}</span>
+            </DropdownMenuItem>}
 
             <DropdownMenuItem
               className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
