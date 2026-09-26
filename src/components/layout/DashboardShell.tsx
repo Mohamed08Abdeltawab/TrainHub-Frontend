@@ -86,7 +86,7 @@ export default function DashboardShell({
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <Badge variant="default" className="mb-2 px-2.5 py-0.5 text-[10px]">
-                  {t(content.section)} {t('workspace')}
+                  {t(content.section)} {t('Workspace')}
                 </Badge>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {active === 'Overview' ? t(content.title) : t(active)}
@@ -94,7 +94,7 @@ export default function DashboardShell({
                 <p className="mt-1.5 text-sm text-muted-foreground">
                   {active === 'Overview'
                     ? t(content.description)
-                    : `${t('Manage')} ${t(active.toLowerCase())} ${t('in your')} ${content.tenant} ${t('workspace')}.`}
+                    : `${t('Manage')} ${t(active)} ${t('in your')} ${content.tenant} ${t('Workspace')}.`}
                 </p>
               </div>
               {active === 'Overview' && (

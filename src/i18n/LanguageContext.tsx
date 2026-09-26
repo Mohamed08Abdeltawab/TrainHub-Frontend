@@ -1,12 +1,20 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import arTranslations from './locales/ar.json';
+import organizationArTranslations from './locales/organization-ar.json';
+import enTranslations from './locales/en.json';
+import organizationEnTranslations from './locales/organization-en.json';
+import { translateText } from './translate.js';
 
 export type Language = 'en' | 'ar';
 const STORAGE_KEY = 'trainhub.language';
 
-const arabic: Record<string, string> = arTranslations;
+const dictionaries = {
+  en: { ...enTranslations, ...organizationEnTranslations },
+  ar: { ...arTranslations, ...organizationArTranslations },
+};
 
-type LanguageContextValue = { language: Language; direction: 'ltr' | 'rtl'; setLanguage: (language: Language) => void; toggleLanguage: () => void; t: (text: string) => string };
+export type TranslationVariables = Record<string, string | number>;
+type LanguageContextValue = { language: Language; direction: 'ltr' | 'rtl'; setLanguage: (language: Language) => void; toggleLanguage: () => void; t: (text: string, variables?: TranslationVariables) => string };
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -26,7 +34,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     direction: language === 'ar' ? 'rtl' as const : 'ltr' as const,
     setLanguage,
     toggleLanguage: () => setLanguage(language === 'en' ? 'ar' : 'en'),
-    t: (text: string) => language === 'ar' ? arabic[text] ?? text : text,
+    t: (text: string, variables?: TranslationVariables) => translateText(text, language, dictionaries, variables),
   }), [language]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

@@ -1,6 +1,10 @@
 import { useDashboardContext } from '@/layouts/DashboardLayout';
 import DashboardOverview from './DashboardOverview';
 import DashboardEmptySection from './DashboardEmptySection';
+import OrganizationProfile from './OrganizationProfile';
+import OrganizationOverview from './OrganizationOverview';
+import OrganizationSettings from './OrganizationSettings';
+import UserProfile from './UserProfile';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -8,8 +12,24 @@ import DashboardEmptySection from './DashboardEmptySection';
  * and renders either the full overview or a placeholder for sections not yet built.
  */
 export default function DashboardSection() {
-  const { content, active, activeItem, navigate, openPrimarySection } =
+  const { content, active, activeItem, navigate, openPrimarySection, role } =
     useDashboardContext();
+
+  if (active === 'Organization profile' && role === 'ORG_ADMIN') {
+    return <OrganizationProfile defaultName={content.tenant} />;
+  }
+
+  if (active === 'Organization settings' && role === 'ORG_ADMIN') {
+    return <OrganizationSettings />;
+  }
+
+  if (active === 'User profile') {
+    return <UserProfile />;
+  }
+
+  if (active === 'Overview' && role === 'ORG_ADMIN') {
+    return <OrganizationOverview content={content} onOpenPrimarySection={openPrimarySection} />;
+  }
 
   if (active === 'Overview') {
     return (
