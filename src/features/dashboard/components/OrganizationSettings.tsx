@@ -6,6 +6,19 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 type Settings = { defaultLanguage: 'en' | 'ar'; timezone: string; enrollmentApproval: boolean; emailNotifications: boolean; weeklySummary: boolean };
 const defaults: Settings = { defaultLanguage: 'en', timezone: 'Africa/Cairo', enrollmentApproval: true, emailNotifications: true, weeklySummary: false };
+const timezones = ['Africa/Cairo', 'Europe/London', 'America/New_York'] as const;
+
+function readSettings(value: unknown): Settings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return defaults;
+  const candidate = value as Partial<Record<keyof Settings, unknown>>;
+  return {
+    defaultLanguage: candidate.defaultLanguage === 'ar' ? 'ar' : 'en',
+    timezone: typeof candidate.timezone === 'string' && timezones.includes(candidate.timezone as typeof timezones[number]) ? candidate.timezone : defaults.timezone,
+    enrollmentApproval: typeof candidate.enrollmentApproval === 'boolean' ? candidate.enrollmentApproval : defaults.enrollmentApproval,
+    emailNotifications: typeof candidate.emailNotifications === 'boolean' ? candidate.emailNotifications : defaults.emailNotifications,
+    weeklySummary: typeof candidate.weeklySummary === 'boolean' ? candidate.weeklySummary : defaults.weeklySummary,
+  };
+}
 
 function SettingToggle({ title, description, checked, onChange }: { title: string; description: string; checked: boolean; onChange: (value: boolean) => void }) {
   const { t } = useLanguage();
@@ -24,8 +37,7 @@ export default function OrganizationSettings() {
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
-        const parsed: unknown = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') setSettings({ ...defaults, ...parsed as Partial<Settings> });
+        setSettings(readSettings(JSON.parse(raw)));
       }
     } catch { setError(true); }
   }, [storageKey]);

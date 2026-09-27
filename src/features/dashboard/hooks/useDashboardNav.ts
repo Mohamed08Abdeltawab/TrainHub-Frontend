@@ -11,7 +11,7 @@ export const toViewKey = (label: string) =>
 export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePath: string) {
   const routerNavigate = useNavigate();
   const location = useLocation();
-  const { enterDemo } = useAuth();
+  const { enterDemo, user } = useAuth();
   const [role, setRole] = useState<DashboardRole>(initialRole);
   const [prevInitialRole, setPrevInitialRole] = useState(initialRole);
 
@@ -51,6 +51,7 @@ export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePa
   }, [basePath, currentSection, navigation, routerNavigate]);
 
   const changeRole = (nextRole: DashboardRole) => {
+    if (user && !user.demo) return;
     enterDemo(nextRole);
     setRole(nextRole);
     const targetUser = demoUsers[nextRole];

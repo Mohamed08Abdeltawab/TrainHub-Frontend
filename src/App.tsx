@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import ErrorBoundary from './components/errors/ErrorBoundary';
 import ProtectedRoute from './auth/ProtectedRoute';
+import OrganizationTenantGuard from './auth/OrganizationTenantGuard';
 import PageLoading from './components/ui/PageLoading';
 import { ROUTES } from './config/routes';
 
@@ -27,7 +28,7 @@ function App() {
               path={ROUTES.ADMIN_DASHBOARD}
               element={
                 <ProtectedRoute roles={['ORG_ADMIN', 'SUPER_ADMIN']}>
-                  <AdminDashboard />
+                  <OrganizationTenantGuard><AdminDashboard /></OrganizationTenantGuard>
                 </ProtectedRoute>
               }
             >

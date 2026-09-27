@@ -9,6 +9,7 @@ import { loginSchema } from '../validators/authValidator';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import type { DashboardRole } from '../types/nav';
+import { demoUsers } from '../config/demoUsers';
 import { useLanguage } from '../i18n/LanguageContext';
 
 type LoginValues = { email: string; password: string };
@@ -26,27 +27,29 @@ export default function Login() {
   const location = useLocation();
   const { user, signIn, enterDemo } = useAuth();
   const { t } = useLanguage();
+  const locationState = location.state as { from?: string; registeredEmail?: string } | null;
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: locationState?.registeredEmail ?? '' },
   });
 
   const onSubmit: SubmitHandler<LoginValues> = async (values) => {
     setError('');
     const result = await signIn(values.email, values.password);
-    if (result !== 'success') {
+    if (result === 'invalid' || result === 'unavailable') {
       if (result === 'unavailable') {
-        setError(t('Sign in is unavailable right now. Check your browser storage settings and try again.'));
+        setError(t('We could not reach the sign-in service. Check your connection and try again.'));
         return;
       }
       setError(t('We couldn’t find an account with that email and password. Check your details or create an account.'));
       return;
     }
-    const destination = (location.state as { from?: string } | null)?.from;
-    navigate(destination ?? '/admin/organizations/demo', { replace: true });
+    const destination = locationState?.from;
+    navigate(destination ?? demoUsers[result].path, { replace: true });
   };
 
   return (

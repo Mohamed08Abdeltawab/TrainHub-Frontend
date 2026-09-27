@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Outlet, useOutletContext } from 'react-router-dom';
+import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
 import { dashboardContent } from '@/config/dashboard';
 import type { DashboardContent, DashboardRole, NavItem } from '@/types/nav';
 import DashboardShell from '@/components/layout/DashboardShell';
@@ -25,10 +25,12 @@ export function useDashboardContext() {
 export default function DashboardLayout({
   initialRole = 'ORG_ADMIN',
   basePath,
+  tenantName,
   children,
 }: {
   initialRole?: DashboardRole;
   basePath: string;
+  tenantName?: string;
   children?: ReactNode;
 }) {
   const {
@@ -45,7 +47,8 @@ export default function DashboardLayout({
     openPrimarySection,
   } = useDashboardNav(initialRole, basePath);
 
-  const content = dashboardContent[role];
+  const content = tenantName ? { ...dashboardContent[role], tenant: tenantName } : dashboardContent[role];
+  const location = useLocation();
 
   const outletContext: DashboardOutletContext = {
     content,
@@ -71,7 +74,9 @@ export default function DashboardLayout({
       onSelectRole={changeRole}
       onPrimaryAction={openPrimarySection}
     >
-      <Outlet context={outletContext} />
+      <div key={location.pathname} className="dashboard-page-enter">
+        <Outlet context={outletContext} />
+      </div>
       {children}
     </DashboardShell>
   );

@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import { Alert, Button, Input } from '@/components/ui';
 import { registerSchema } from '../validators/authValidator';
-import { createLocalAccount } from '../utils/localAuth';
+import { authApi } from '../api/auth';
+import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -32,18 +33,27 @@ export default function Register() {
 
   const onSubmit: SubmitHandler<RegisterValues> = async (values) => {
     setError('');
-    const result = await createLocalAccount({
-      name: values.name,
-      organization: values.organization,
-      email: values.email,
-      password: values.password,
-    });
-    if (!result.ok) {
-      setError(t(result.message));
+    try {
+      await authApi.register({
+        name: values.name.trim(),
+        organization: values.organization.trim(),
+        email: values.email.trim(),
+        password: values.password,
+      });
+    } catch (requestError) {
+      const responseMessage = axios.isAxiosError(requestError)
+        ? (requestError.response?.data as { message?: unknown } | undefined)?.message
+        : undefined;
+      const message = typeof responseMessage === 'string'
+        ? responseMessage
+        : axios.isAxiosError(requestError) && requestError.response?.status === 409
+          ? 'An account with this email already exists. Sign in instead.'
+          : 'We could not create your account. Check your connection and try again.';
+      setError(t(message));
       return;
     }
     setCreated(true);
-    window.setTimeout(() => navigate('/', { state: { registeredEmail: values.email } }), 900);
+    window.setTimeout(() => navigate('/', { state: { registeredEmail: values.email.trim() } }), 900);
   };
 
   return (
