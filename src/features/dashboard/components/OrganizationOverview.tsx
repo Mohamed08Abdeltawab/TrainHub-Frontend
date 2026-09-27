@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { ArrowUpRight, BookOpenCheck, CalendarDays, ClipboardCheck, UsersRound } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 import type { DashboardContent } from '@/types/nav';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -12,8 +14,44 @@ const engagement = [
 
 export default function OrganizationOverview({ content, onOpenPrimarySection }: { content: DashboardContent; onOpenPrimarySection: () => void }) {
   const { t } = useLanguage();
+  const { orgId = 'demo' } = useParams();
+  const [organization, setOrganization] = useState({ name: content.tenant, email: '' });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`trainhub.organization.${orgId}.profile`);
+      if (!raw) {
+        setOrganization({ name: content.tenant, email: '' });
+        return;
+      }
+      const profile: unknown = JSON.parse(raw);
+      if (profile && typeof profile === 'object' && !Array.isArray(profile)) {
+        const stored = profile as { name?: unknown; email?: unknown };
+        setOrganization({
+          name: typeof stored.name === 'string' && stored.name.trim() ? stored.name : content.tenant,
+          email: typeof stored.email === 'string' ? stored.email : '',
+        });
+      }
+    } catch {
+      setOrganization({ name: content.tenant, email: '' });
+    }
+  }, [content.tenant, orgId]);
+
   return (
     <div className="space-y-5">
+      <Card className="border-border bg-card/70 px-5 py-4 shadow-sm">
+        <div className="flex w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 text-start">
+            <p className="text-xs font-medium text-muted-foreground">{t('Organization summary')}</p>
+            <h2 className="mt-1 break-words text-lg font-bold text-foreground">{organization.name}</h2>
+            <p className="mt-1 break-words text-xs text-muted-foreground">{organization.email || t('Add a contact email to your organization profile.')}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 sm:shrink-0">
+            <Badge variant="secondary">{t(content.plan)}</Badge>
+            <Link to={`/admin/organizations/${orgId}/organization-profile`} className="text-start text-xs font-semibold text-primary hover:underline">{t('Edit organization profile')}</Link>
+          </div>
+        </div>
+      </Card>
       <section aria-label={t('Organization performance')} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {content.metrics.map((metric, index) => {
           const Icon = metricIcons[index] ?? ArrowUpRight;

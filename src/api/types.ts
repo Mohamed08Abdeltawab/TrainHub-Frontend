@@ -19,6 +19,7 @@ export type LoginResponse = {
     email: string;
     role: DashboardRole;
     organization?: string;
+    organizationId?: string;
   };
 };
 

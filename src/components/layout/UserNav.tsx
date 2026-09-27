@@ -57,6 +57,7 @@ export default function UserNav({
     ? { ...(demoUsers[authUser.role] ?? demoUsers.ORG_ADMIN), name: authUser.name, email: authUser.email, role: authUser.role }
     : demoUsers[role] ?? demoUsers.ORG_ADMIN;
   const userList = Object.values(demoUsers);
+  const canSwitchDemo = !authUser || authUser.demo === true;
 
   const handleSelectUser = (user: DemoUser) => {
     onSelectRole(user.role);
@@ -69,7 +70,7 @@ export default function UserNav({
   return (
     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
       {/* 1. Role & Demo User Switcher Button */}
-      <DropdownMenu
+      {canSwitchDemo ? <DropdownMenu
         {...(isRoleControlled
           ? {
               open: roleMenuOpen,
@@ -150,7 +151,7 @@ export default function UserNav({
               {t('Demo environment: Instant role switching enabled')}
           </div>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenu> : <Badge variant="outline" className="px-2.5 py-2 text-xs">{t(activeUser.roleTitle)}</Badge>}
 
       {/* 2. User Profile Menu */}
       <DropdownMenu
@@ -200,7 +201,7 @@ export default function UserNav({
           </DropdownMenuItem>
 
           {/* Quick Switch Demo User */}
-          <DropdownMenuGroup>
+          {canSwitchDemo && <DropdownMenuGroup>
             <DropdownMenuLabel className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
               {t('Switch Demo Account')}
             </DropdownMenuLabel>
@@ -227,7 +228,7 @@ export default function UserNav({
                 </DropdownMenuItem>
               );
             })}
-          </DropdownMenuGroup>
+          </DropdownMenuGroup>}
 
           <DropdownMenuSeparator />
 

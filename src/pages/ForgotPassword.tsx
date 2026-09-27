@@ -6,11 +6,14 @@ import AuthLayout from '../layouts/AuthLayout';
 import { Alert, Button, Input } from '@/components/ui';
 import { forgotPasswordSchema } from '../validators/authValidator';
 import { useLanguage } from '../i18n/LanguageContext';
+import { authApi } from '../api/auth';
+import axios from 'axios';
 
 type ForgotPasswordValues = { email: string };
 
 export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
   const { t } = useLanguage();
   const {
     register,
@@ -18,7 +21,18 @@ export default function ForgotPassword() {
     formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordValues>({ resolver: zodResolver(forgotPasswordSchema) });
 
-  const onSubmit: SubmitHandler<ForgotPasswordValues> = () => setSubmitted(true);
+  const onSubmit: SubmitHandler<ForgotPasswordValues> = async ({ email }) => {
+    setError('');
+    try {
+      await authApi.forgotPassword({ email: email.trim() });
+      setSubmitted(true);
+    } catch (requestError) {
+      const responseMessage = axios.isAxiosError(requestError)
+        ? (requestError.response?.data as { message?: unknown } | undefined)?.message
+        : undefined;
+      setError(typeof responseMessage === 'string' ? t(responseMessage) : t('We could not send the reset request. Check your connection and try again.'));
+    }
+  };
 
   return (
     <AuthLayout
@@ -27,7 +41,7 @@ export default function ForgotPassword() {
     >
       <form
         onSubmit={handleSubmit(onSubmit)}
-        onChange={() => setSubmitted(false)}
+        onChange={() => { setSubmitted(false); setError(''); }}
         noValidate
         className="space-y-4"
       >
@@ -50,9 +64,10 @@ export default function ForgotPassword() {
           {t('Send reset link')}
         </Button>
       </form>
+      {error && <Alert className="mt-4" variant="error">{error}</Alert>}
       {submitted && (
         <Alert className="mt-4" variant="info">
-          {t('Your email is valid. Password reset is not connected yet.')}
+          {t('If an account exists for this email, you will receive a password reset link.')}
         </Alert>
       )}
       <p className="mt-5 text-center text-xs text-muted-foreground">
