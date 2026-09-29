@@ -3,7 +3,7 @@ import arTranslations from './locales/ar.json';
 import organizationArTranslations from './locales/organization-ar.json';
 import enTranslations from './locales/en.json';
 import organizationEnTranslations from './locales/organization-en.json';
-import { translateText } from './translate.js';
+import { translateText } from './translate';
 
 export type Language = 'en' | 'ar';
 const STORAGE_KEY = 'trainhub.language';

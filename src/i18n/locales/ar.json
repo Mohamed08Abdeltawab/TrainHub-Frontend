@@ -282,5 +282,27 @@
   "Joined": "تاريخ الانضمام",
   "Not available": "غير متاح"
 ,
-  "Edit": "تعديل"
+  "Edit": "تعديل",
+  "Instructor": "المدرب",
+  "View and manage instructors at your training center.": "اعرض مدربي مركزك التدريبي وأدر بياناتهم.",
+  "Add instructor": "إضافة مدرب",
+  "Total instructors": "إجمالي المدربين",
+  "Instructor directory": "دليل المدربين",
+  "Search instructors": "البحث عن المدربين",
+  "Search by name, email, phone, or expertise": "ابحث بالاسم أو البريد الإلكتروني أو الهاتف أو التخصص",
+  "Expertise": "التخصص",
+  "No instructors match your search": "لا يوجد مدربون يطابقون بحثك",
+  "No instructors yet": "لا يوجد مدربون بعد",
+  "Add your first instructor to start building your directory.": "أضف أول مدرب لبدء إنشاء الدليل.",
+  "Instructors will appear here when they are added to your center.": "سيظهر المدربون هنا بعد إضافتهم إلى مركزك.",
+  "Edit instructor": "تعديل بيانات المدرب",
+  "Update the instructor profile details.": "حدّث بيانات الملف الشخصي للمدرب.",
+  "Add an instructor to your training center.": "أضف مدربًا إلى مركزك التدريبي.",
+  "Expertise (optional)": "التخصص (اختياري)",
+  "An instructor with this email already exists.": "يوجد مدرب مسجل بهذا البريد الإلكتروني بالفعل.",
+  "You do not have permission to save instructor changes.": "ليست لديك صلاحية لحفظ تغييرات المدرب.",
+  "Instructor details": "تفاصيل المدرب",
+  "View the instructor profile and expertise.": "اعرض الملف الشخصي للمدرب وتخصصه.",
+  "Instructor profile": "الملف الشخصي للمدرب",
+  "Inactive instructors": "المدربون غير النشطين"
 }
