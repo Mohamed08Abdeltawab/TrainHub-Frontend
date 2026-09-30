@@ -7,6 +7,7 @@ import OrganizationSettings from './OrganizationSettings';
 import UserProfile from './UserProfile';
 import StudentsList from '@/features/students/components/StudentsList';
 import InstructorsList from '@/features/instructors/components/InstructorsList';
+import CoursesList from '@/features/courses/components/CoursesList';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -35,6 +36,10 @@ export default function DashboardSection() {
 
   if (active === 'Instructors' && role === 'ORG_ADMIN') {
     return <InstructorsList />;
+  }
+
+  if (active === 'Courses' && role === 'ORG_ADMIN') {
+    return <CoursesList />;
   }
 
   if (active === 'Overview' && role === 'ORG_ADMIN') {
