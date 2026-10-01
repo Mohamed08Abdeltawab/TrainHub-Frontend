@@ -8,6 +8,7 @@ import UserProfile from './UserProfile';
 import StudentsList from '@/features/students/components/StudentsList';
 import InstructorsList from '@/features/instructors/components/InstructorsList';
 import CoursesList from '@/features/courses/components/CoursesList';
+import GroupsList from '@/features/courses/components/GroupsList';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -40,6 +41,10 @@ export default function DashboardSection() {
 
   if (active === 'Courses' && role === 'ORG_ADMIN') {
     return <CoursesList />;
+  }
+
+  if ((active === 'Cohorts' && role === 'ORG_ADMIN') || (active === 'My cohorts' && role === 'INSTRUCTOR')) {
+    return <GroupsList />;
   }
 
   if (active === 'Overview' && role === 'ORG_ADMIN') {
