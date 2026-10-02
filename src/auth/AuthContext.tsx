@@ -24,7 +24,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<DashboardRole | 'invalid' | 'unavailable'>;
   enterDemo: (role: DashboardRole) => void;
   signOut: () => void;
-  updateProfile: (updates: Pick<AuthUser, 'name' | 'jobTitle' | 'phone' | 'timezone' | 'bio'>) => boolean;
+  updateProfile: (updates: Pick<AuthUser, 'name' | 'email' | 'jobTitle' | 'phone' | 'timezone' | 'bio'>) => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
