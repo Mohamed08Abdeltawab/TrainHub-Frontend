@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type SubmitHandler } from 'react-hook-form';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../layouts/AuthLayout';
 import { Alert, Button, Input, Separator } from '@/components/ui';
 import { loginSchema } from '../validators/authValidator';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import type { DashboardRole } from '../types/nav';
 import { demoUsers } from '../config/demoUsers';

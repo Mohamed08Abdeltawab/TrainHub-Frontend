@@ -9,6 +9,7 @@ export default function UserProfile() {
   const { user, updateProfile } = useAuth();
   const { t } = useLanguage();
   const [name, setName] = useState(user?.name ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
   const [jobTitle, setJobTitle] = useState(user?.jobTitle ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [timezone, setTimezone] = useState(user?.timezone ?? 'Africa/Cairo');
@@ -19,7 +20,7 @@ export default function UserProfile() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaved(false);
-    const success = updateProfile({ name: name.trim(), jobTitle: jobTitle.trim(), phone: phone.trim(), timezone, bio: bio.trim() });
+    const success = updateProfile({ name: name.trim(), email: email.trim(), jobTitle: jobTitle.trim(), phone: phone.trim(), timezone, bio: bio.trim() });
     setSaved(success);
     setError(!success);
   };
@@ -30,7 +31,7 @@ export default function UserProfile() {
       <Card className="border-border bg-card/70"><CardHeader className="border-b border-border px-5 py-4"><CardTitle className="flex items-center gap-2 text-sm"><UserRound className="size-4 text-primary" />{t('Personal information')}</CardTitle><CardDescription>{t('Your name and contact details are visible to your organization.')}</CardDescription></CardHeader><CardContent className="px-5 py-5">
         <form onSubmit={submit} className="space-y-5"><div className="grid gap-4 sm:grid-cols-2">
           <Input label={t('Full name')} required minLength={2} maxLength={80} value={name} onChange={(event) => { setName(event.target.value); setSaved(false); }} />
-          <Input label={t('Email address')} type="email" value={user?.email ?? ''} disabled description={t('Email address cannot be changed here.')} />
+          <Input label={t('Email address')} type="email" required maxLength={254} autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); setSaved(false); }} description={t('Use an email address you can access. It is used to sign in.')} />
           <Input label={t('Job title')} maxLength={80} value={jobTitle} onChange={(event) => { setJobTitle(event.target.value); setSaved(false); }} placeholder={t('For example, Training manager')} />
           <Input label={t('Phone number')} type="tel" maxLength={30} value={phone} onChange={(event) => { setPhone(event.target.value); setSaved(false); }} placeholder="+20 100 000 0000" />
         </div>
