@@ -11,6 +11,7 @@ import CoursesList from '@/features/courses/components/CoursesList';
 import GroupsList from '@/features/courses/components/GroupsList';
 import SessionsList from '@/features/sessions/components/SessionsList';
 import ScheduleView from '@/features/sessions/components/ScheduleView';
+import AttendancePage from '@/features/sessions/components/AttendancePage';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -51,6 +52,10 @@ export default function DashboardSection() {
 
   if (active === 'Sessions' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR' || role === 'SUPER_ADMIN')) {
     return <SessionsList />;
+  }
+
+  if (active === 'Attendance' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR' || role === 'STUDENT')) {
+    return <AttendancePage />;
   }
 
   if (active === 'Schedule' && role === 'INSTRUCTOR') {
