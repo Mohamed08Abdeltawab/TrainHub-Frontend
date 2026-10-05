@@ -8,6 +8,16 @@ import { useAuth } from '@/auth/AuthContext';
 export const toViewKey = (label: string) =>
   label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+const SIDEBAR_COLLAPSED_KEY = 'trainhub.dashboard.sidebar-collapsed';
+
+function readSidebarCollapsed() {
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePath: string) {
   const routerNavigate = useNavigate();
   const location = useLocation();
@@ -20,8 +30,16 @@ export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePa
     setRole(initialRole);
   }
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(readSidebarCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed));
+    } catch {
+      // The current dashboard session still retains the selected sidebar state.
+    }
+  }, [collapsed]);
 
   const navigation: NavItem[] = useMemo(() => roleNavigation[role] ?? [], [role]);
 

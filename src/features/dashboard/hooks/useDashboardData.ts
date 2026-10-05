@@ -3,9 +3,10 @@ import type { DashboardContent, DashboardRole } from '@/types/nav';
 import { dashboardContent } from '@/config/dashboard';
 import { dashboardApi } from '@/api/dashboard';
 
-export function useDashboardData(role: DashboardRole) {
+export function useDashboardData(role: DashboardRole, enabled = true) {
   return useQuery<DashboardContent>({
     queryKey: ['dashboard', role],
+    enabled,
     queryFn: async () => {
       try {
         return await dashboardApi.getDashboardContent(role);

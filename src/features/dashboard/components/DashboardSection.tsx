@@ -12,6 +12,8 @@ import GroupsList from '@/features/courses/components/GroupsList';
 import SessionsList from '@/features/sessions/components/SessionsList';
 import ScheduleView from '@/features/sessions/components/ScheduleView';
 import AttendancePage from '@/features/sessions/components/AttendancePage';
+import { useDashboardData } from '@/features/dashboard/hooks/useDashboardData';
+import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -21,6 +23,7 @@ import AttendancePage from '@/features/sessions/components/AttendancePage';
 export default function DashboardSection() {
   const { content, active, activeItem, navigate, openPrimarySection, role } =
     useDashboardContext();
+  const dashboardQuery = useDashboardData(role, active === 'Overview');
 
   if (active === 'Organization profile' && role === 'ORG_ADMIN') {
     return <OrganizationProfile defaultName={content.tenant} />;
@@ -67,13 +70,14 @@ export default function DashboardSection() {
   }
 
   if (active === 'Overview' && role === 'ORG_ADMIN') {
-    return <OrganizationOverview content={content} onOpenPrimarySection={openPrimarySection} />;
+    return <OrganizationOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
   }
 
   if (active === 'Overview') {
+    if (dashboardQuery.isPending) return <DashboardSkeleton />;
     return (
       <DashboardOverview
-        content={content}
+        content={dashboardQuery.data ?? content}
         onOpenPrimarySection={openPrimarySection}
       />
     );
