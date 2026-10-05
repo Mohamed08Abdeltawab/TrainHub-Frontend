@@ -1,21 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, BookOpenCheck, CalendarDays, ClipboardCheck, UsersRound } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import type { DashboardContent } from '@/types/nav';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@/components/ui';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/auth/AuthContext';
+import { studentsApi, type Student } from '@/features/students/api/studentsApi';
+import ErrorState from '@/components/errors/ErrorState';
+import OperationalStatistics from './OperationalStatistics';
 
 const metricIcons = [UsersRound, BookOpenCheck, ArrowUpRight, ClipboardCheck];
-const engagement = [
-  { label: 'Course completion', value: 86, color: 'bg-primary' },
-  { label: 'Learner attendance', value: 92, color: 'bg-emerald-500' },
-  { label: 'Assignment reviews', value: 68, color: 'bg-amber-500' },
-];
 
 export default function OrganizationOverview({ content, onOpenPrimarySection }: { content: DashboardContent; onOpenPrimarySection: () => void }) {
   const { t } = useLanguage();
   const { orgId = 'demo' } = useParams();
+  const { user } = useAuth();
   const [organization, setOrganization] = useState({ name: content.tenant, email: '' });
+  const [students, setStudents] = useState<Student[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [studentsError, setStudentsError] = useState<unknown>();
+
+  const loadStudents = useCallback(async () => {
+    setStudentsLoading(true);
+    setStudentsError(undefined);
+    try {
+      setStudents(await studentsApi.list(orgId, Boolean(user?.demo)));
+    } catch (error) {
+      setStudentsError(error);
+    } finally {
+      setStudentsLoading(false);
+    }
+  }, [orgId, user?.demo]);
+
+  useEffect(() => { void loadStudents(); }, [loadStudents]);
+
+  const studentStats = useMemo(() => {
+    const active = students.filter((student) => student.status === 'Active').length;
+    const pending = students.filter((student) => student.status === 'Pending').length;
+    const courses = new Map<string, number>();
+    students.forEach((student) => {
+      const course = student.course.trim() || t('Not assigned');
+      courses.set(course, (courses.get(course) ?? 0) + 1);
+    });
+    return { active, pending, courses: [...courses.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5) };
+  }, [students, t]);
 
   useEffect(() => {
     try {
@@ -53,19 +81,46 @@ export default function OrganizationOverview({ content, onOpenPrimarySection }: 
         </div>
       </Card>
       <section aria-label={t('Organization performance')} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {content.metrics.map((metric, index) => {
+        {content.metrics.map((originalMetric, index) => {
+          const metric = index === 0 && !studentsError
+            ? { ...originalMetric, value: studentsLoading ? '—' : students.length.toLocaleString(), note: studentsLoading ? 'Loading student statistics...' : `${studentStats.active} ${t('Active').toLowerCase()} · ${studentStats.pending} ${t('Pending').toLowerCase()}` }
+            : originalMetric;
           const Icon = metricIcons[index] ?? ArrowUpRight;
-          return <Card key={metric.label} className="border-border bg-card/70 p-4 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-medium text-muted-foreground">{t(metric.label)}</p><p className="mt-3 text-2xl font-bold tracking-tight text-foreground">{metric.value}</p></div><span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="size-4" /></span></div><p className="mt-2 text-[11px] text-muted-foreground">{t(metric.note)}</p></Card>;
+          return <Card key={metric.label} className="border-border bg-card/70 p-4 shadow-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-medium text-muted-foreground">{t(metric.label)}</p><p className="mt-3 text-2xl font-bold tracking-tight text-foreground">{metric.value}</p></div><span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="size-4" /></span></div><p className="mt-2 text-[11px] text-muted-foreground">{studentsLoading && index === 0 ? <Skeleton className="h-3 w-36" /> : t(metric.note)}</p></Card>;
         })}
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
-        <Card className="border-border bg-card/70 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between px-5 pb-2 pt-5"><div><CardTitle className="text-sm">{t('Training center health')}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{t('A quick view of learner engagement this month.')}</p></div><Badge variant="success">{t('On track')}</Badge></CardHeader>
-          <CardContent className="space-y-5 px-5 pb-5 pt-3">
-            {engagement.map((item) => <div key={item.label}><div className="mb-2 flex justify-between text-xs"><span className="text-muted-foreground">{t(item.label)}</span><span className="font-semibold text-foreground">{item.value}%</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.value}%` }} /></div></div>)}
-          </CardContent>
-        </Card>
+      <Card className="border-border bg-card/70 shadow-sm">
+        <CardHeader className="px-5 pb-2 pt-5">
+          <CardTitle className="text-sm">{t('Student statistics')}</CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">{t('Enrollment and status summary for your training center.')}</p>
+        </CardHeader>
+        <CardContent className="px-5 pb-5">
+          {studentsError ? (
+            <ErrorState error={studentsError} onRetry={() => void loadStudents()} retryLabel={t('Try again')} />
+          ) : studentsLoading ? (
+            <div role="status" aria-label={t('Loading student statistics...')} className="grid gap-3 sm:grid-cols-3">
+              {[0, 1, 2].map((item) => <Skeleton key={item} className="h-16 rounded-lg" />)}
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-[repeat(3,minmax(0,1fr))]">
+              {[
+                { label: 'Total students', value: students.length },
+                { label: 'Active', value: studentStats.active },
+                { label: 'Pending', value: studentStats.pending },
+              ].map((stat) => <div key={stat.label} className="rounded-lg border border-border p-3"><p className="text-xs text-muted-foreground">{t(stat.label)}</p><p className="mt-1 text-xl font-semibold text-foreground">{stat.value.toLocaleString()}</p></div>)}
+              <div className="sm:col-span-3">
+                <h3 className="mb-2 text-xs font-semibold text-foreground">{t('Enrollment by course')}</h3>
+                {studentStats.courses.length ? <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{studentStats.courses.map(([course, count]) => <li key={course} className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2 text-xs"><span className="truncate text-muted-foreground">{course}</span><span className="font-semibold text-foreground">{count.toLocaleString()}</span></li>)}</ul> : <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">{t('No student enrollment data yet.')}</p>}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <OperationalStatistics />
+
+      <div>
         <Card className="border-border bg-card/70 shadow-sm">
           <CardHeader className="px-5 pb-2 pt-5"><CardTitle className="text-sm">{t('Needs your attention')}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{t('Keep your academy operations moving.')}</p></CardHeader>
           <CardContent className="space-y-3 px-5 pb-5 pt-2">
