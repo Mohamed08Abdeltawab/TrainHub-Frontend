@@ -9,6 +9,7 @@ export type Student = {
   course: string;
   status: StudentStatus;
   createdAt: string;
+  studentCode?: string;
 };
 export type StudentInput = Omit<Student, 'id' | 'createdAt'>;
 
@@ -22,16 +23,50 @@ const readDemoStudents = (orgId: string): Student[] => {
 };
 const writeDemoStudents = (orgId: string, students: Student[]) => localStorage.setItem(storageKey(orgId), JSON.stringify(students));
 
+function mapStudent(dto: any): Student {
+  const name = [dto.firstName, dto.lastName].filter(Boolean).join(' ') || dto.studentCode || 'Student';
+  return {
+    id: dto.id,
+    name,
+    email: dto.email || '',
+    phone: dto.phoneNumber || dto.guardianPhone || '',
+    course: dto.academicYear || '',
+    status: (dto.isActive === false ? 'Inactive' : 'Active') as StudentStatus,
+    createdAt: dto.createdAt || new Date().toISOString(),
+    studentCode: dto.studentCode || undefined,
+  };
+}
+
 export const studentsApi = {
   async list(orgId: string, demo: boolean): Promise<Student[]> {
     if (demo) return readDemoStudents(orgId);
-    const { data } = await apiClient.get<Student[]>(`/organizations/${encodeURIComponent(orgId)}/students`);
-    return data;
+    const { data } = await apiClient.get<any>('/students');
+    const items = Array.isArray(data) ? data : data?.items || [];
+    return items.map(mapStudent);
   },
   async create(orgId: string, input: StudentInput, demo: boolean): Promise<Student> {
     if (!demo) {
-      const { data } = await apiClient.post<Student>(`/organizations/${encodeURIComponent(orgId)}/students`, input);
-      return data;
+      const nameParts = input.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || 'Student';
+      const lastName = nameParts.slice(1).join(' ') || firstName;
+      const regRes = await apiClient.post<any>('/auth/register', {
+        firstName,
+        lastName,
+        email: input.email.trim(),
+        password: 'Password123!',
+        confirmPassword: 'Password123!',
+        organizationId: orgId,
+        phoneNumber: input.phone?.trim() || undefined,
+      });
+      const userId = regRes.data.userId;
+      const studentCode = `STU-${Math.floor(1000 + Math.random() * 9000)}`;
+      const { data } = await apiClient.post<any>('/students', {
+        userId,
+        studentCode,
+        guardianPhone: input.phone?.trim() || undefined,
+        academicYear: input.course?.trim() || undefined,
+      });
+      return mapStudent(data);
     }
     const student = { ...input, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     writeDemoStudents(orgId, [student, ...readDemoStudents(orgId)]);
@@ -39,8 +74,22 @@ export const studentsApi = {
   },
   async update(orgId: string, id: string, input: StudentInput, demo: boolean): Promise<Student> {
     if (!demo) {
-      const { data } = await apiClient.put<Student>(`/organizations/${encodeURIComponent(orgId)}/students/${encodeURIComponent(id)}`, input);
-      return data;
+      let studentCode = (input as any).studentCode;
+      if (!studentCode) {
+        try {
+          const existing = await apiClient.get<any>(`/students/${encodeURIComponent(id)}`);
+          studentCode = existing.data?.studentCode;
+        } catch {
+          // ignore error fetching existing
+        }
+      }
+      studentCode = studentCode || `STU-${id.slice(0, 4).toUpperCase()}`;
+      const { data } = await apiClient.put<any>(`/students/${encodeURIComponent(id)}`, {
+        studentCode,
+        guardianPhone: input.phone?.trim() || undefined,
+        academicYear: input.course?.trim() || undefined,
+      });
+      return mapStudent(data);
     }
     const students = readDemoStudents(orgId);
     const existing = students.find((student) => student.id === id);

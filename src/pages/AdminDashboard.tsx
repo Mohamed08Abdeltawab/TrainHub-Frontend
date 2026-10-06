@@ -15,6 +15,10 @@ export default function AdminDashboard() {
       return;
     }
     const readName = () => {
+      if (user?.organization) {
+        setTenantName(user.organization);
+        return;
+      }
       try {
         const profile = JSON.parse(localStorage.getItem(`trainhub.organization.${orgId}.profile`) ?? 'null') as { name?: unknown } | null;
         setTenantName(typeof profile?.name === 'string' && profile.name.trim() ? profile.name.trim() : orgId === 'demo' ? 'Al-Amal Training Center' : `Training Center (${orgId})`);

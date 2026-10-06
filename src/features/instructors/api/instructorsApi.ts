@@ -22,16 +22,47 @@ const readDemoInstructors = (orgId: string): Instructor[] => {
 };
 const writeDemoInstructors = (orgId: string, instructors: Instructor[]) => localStorage.setItem(storageKey(orgId), JSON.stringify(instructors));
 
+function mapInstructor(dto: any): Instructor {
+  const name = [dto.firstName, dto.lastName].filter(Boolean).join(' ') || dto.email || 'Instructor';
+  return {
+    id: dto.id,
+    name,
+    email: dto.email || '',
+    phone: dto.phoneNumber || '',
+    expertise: dto.specialization || '',
+    status: 'Active' as InstructorStatus,
+    createdAt: dto.createdAt || new Date().toISOString(),
+  };
+}
+
 export const instructorsApi = {
   async list(orgId: string, demo: boolean): Promise<Instructor[]> {
     if (demo) return readDemoInstructors(orgId);
-    const { data } = await apiClient.get<Instructor[]>(`/organizations/${encodeURIComponent(orgId)}/instructors`);
-    return data;
+    const { data } = await apiClient.get<any>('/instructors');
+    const items = Array.isArray(data) ? data : data?.items || [];
+    return items.map(mapInstructor);
   },
   async create(orgId: string, input: InstructorInput, demo: boolean): Promise<Instructor> {
     if (!demo) {
-      const { data } = await apiClient.post<Instructor>(`/organizations/${encodeURIComponent(orgId)}/instructors`, input);
-      return data;
+      const nameParts = input.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || 'Instructor';
+      const lastName = nameParts.slice(1).join(' ') || firstName;
+      const regRes = await apiClient.post<any>('/auth/register', {
+        firstName,
+        lastName,
+        email: input.email.trim(),
+        password: 'Password123!',
+        confirmPassword: 'Password123!',
+        organizationId: orgId,
+        phoneNumber: input.phone?.trim() || undefined,
+      });
+      const userId = regRes.data.userId;
+      const { data } = await apiClient.post<any>('/instructors', {
+        userId,
+        specialization: input.expertise?.trim() || 'General',
+        bio: '',
+      });
+      return mapInstructor(data);
     }
     const instructor = { ...input, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     writeDemoInstructors(orgId, [instructor, ...readDemoInstructors(orgId)]);
@@ -39,8 +70,11 @@ export const instructorsApi = {
   },
   async update(orgId: string, id: string, input: InstructorInput, demo: boolean): Promise<Instructor> {
     if (!demo) {
-      const { data } = await apiClient.put<Instructor>(`/organizations/${encodeURIComponent(orgId)}/instructors/${encodeURIComponent(id)}`, input);
-      return data;
+      const { data } = await apiClient.put<any>(`/instructors/${encodeURIComponent(id)}`, {
+        specialization: input.expertise?.trim() || 'General',
+        bio: '',
+      });
+      return mapInstructor(data);
     }
     const instructors = readDemoInstructors(orgId);
     const existing = instructors.find((instructor) => instructor.id === id);

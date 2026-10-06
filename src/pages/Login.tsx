@@ -48,7 +48,16 @@ export default function Login() {
       return;
     }
     const destination = locationState?.from;
-    navigate(destination ?? demoUsers[result].path, { replace: true });
+    let targetPath = destination ?? demoUsers[result].path;
+    if (!destination && result === 'ORG_ADMIN') {
+      try {
+        const session = JSON.parse(localStorage.getItem('trainhub.session') ?? '{}');
+        if (session.organizationId) {
+          targetPath = `/admin/organizations/${session.organizationId}`;
+        }
+      } catch { /* fallback to default */ }
+    }
+    navigate(targetPath, { replace: true });
   };
 
   return (
