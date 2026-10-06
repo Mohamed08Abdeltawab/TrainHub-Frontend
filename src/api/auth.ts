@@ -18,9 +18,30 @@ function mapRole(backendRoles?: string[]): DashboardRole {
   return 'ORG_ADMIN';
 }
 
+interface BackendAuthResponse {
+  accessToken?: string;
+  token?: string;
+  roles?: string[];
+  userId?: string;
+  email?: string;
+  userName?: string;
+  firstName?: string;
+  lastName?: string;
+  organizationId?: string;
+  organizationName?: string;
+  user?: {
+    id?: string;
+    name?: string;
+    email?: string;
+    role?: DashboardRole;
+    organization?: string;
+    organizationId?: string;
+  };
+}
+
 export const authApi = {
   async login(payload: LoginRequest): Promise<LoginResponse> {
-    const { data } = await apiClient.post<any>('/auth/login', payload);
+    const { data } = await apiClient.post<BackendAuthResponse>('/auth/login', payload);
 
     const token = data.accessToken || data.token || '';
     const roles = data.roles || (data.user?.role ? [data.user.role] : []);
