@@ -1,8 +1,8 @@
 import apiClient from '@/api/apiClient';
 
 export type CourseGroupStatus = 'Planned' | 'Active' | 'Completed' | 'Cancelled';
-export type CourseGroup = { id: string; name: string; courseId: string; startDate: string; endDate: string; capacity: number; instructorIds?: string[]; enrolledCount?: number; status: CourseGroupStatus; createdAt: string };
-export type CourseGroupInput = Omit<CourseGroup, 'id' | 'createdAt'>;
+export type CourseGroup = { id: string; name: string; courseId: string; courseTitle?: string; startDate: string; endDate: string; capacity: number; instructorIds?: string[]; enrolledCount?: number; status: CourseGroupStatus; createdAt: string };
+export type CourseGroupInput = Omit<CourseGroup, 'id' | 'createdAt' | 'courseTitle'>;
 const key = (orgId: string) => `trainhub.organization.${orgId}.groups`;
 function read(orgId: string): CourseGroup[] {
   try { const value: unknown = JSON.parse(localStorage.getItem(key(orgId)) ?? '[]'); return Array.isArray(value) ? value.filter((item): item is CourseGroup => Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.courseId === 'string')) : []; } catch { return []; }
@@ -12,6 +12,11 @@ export const groupsApi = {
   async list(orgId: string, demo: boolean): Promise<CourseGroup[]> {
     if (demo) return read(orgId);
     const { data } = await apiClient.get<CourseGroup[]>(`/organizations/${encodeURIComponent(orgId)}/groups`); return data;
+  },
+  async listForInstructor(demoOrgId: string, demo: boolean): Promise<CourseGroup[]> {
+    if (demo) return read(demoOrgId);
+    const { data } = await apiClient.get<CourseGroup[]>('/instructors/me/groups');
+    return data;
   },
   async create(orgId: string, input: CourseGroupInput, demo: boolean): Promise<CourseGroup> {
     if (!demo) { const { data } = await apiClient.post<CourseGroup>(`/organizations/${encodeURIComponent(orgId)}/groups`, input); return data; }

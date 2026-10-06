@@ -14,6 +14,9 @@ import ScheduleView from '@/features/sessions/components/ScheduleView';
 import AttendancePage from '@/features/sessions/components/AttendancePage';
 import { useDashboardData } from '@/features/dashboard/hooks/useDashboardData';
 import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
+import MyCourses from '@/features/courses/components/MyCourses';
+import ErrorState from '@/components/errors/ErrorState';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -24,6 +27,11 @@ export default function DashboardSection() {
   const { content, active, activeItem, navigate, openPrimarySection, role } =
     useDashboardContext();
   const dashboardQuery = useDashboardData(role, active === 'Overview');
+  const { t } = useLanguage();
+
+  if (active === 'Overview' && dashboardQuery.isError) {
+    return <ErrorState error={dashboardQuery.error} onRetry={() => void dashboardQuery.refetch()} retryLabel={t('Try again')} />;
+  }
 
   if (active === 'Organization profile' && role === 'ORG_ADMIN') {
     return <OrganizationProfile defaultName={content.tenant} />;
@@ -39,6 +47,10 @@ export default function DashboardSection() {
 
   if (active === 'Learners' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR')) {
     return <StudentsList />;
+  }
+
+  if (active === 'My courses' && (role === 'STUDENT' || role === 'INSTRUCTOR')) {
+    return <MyCourses />;
   }
 
   if (active === 'Instructors' && role === 'ORG_ADMIN') {
