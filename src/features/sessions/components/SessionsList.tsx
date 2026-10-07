@@ -24,8 +24,21 @@ export default function SessionsList() {
     setLoading(true); setLoadError('');
     try {
       const [nextSessions, nextGroups] = await Promise.all([sessionsApi.list(orgId, demo), groupsApi.list(orgId, demo)]);
-      setSessions(nextSessions); setGroups(nextGroups);
-      if (user?.role === 'INSTRUCTOR' && user.email) { const instructors = await instructorsApi.list(orgId, demo); setInstructorId(instructors.find((item) => item.email.toLowerCase() === user.email.toLowerCase())?.id ?? null); }
+      setSessions(nextSessions);
+      setGroups(nextGroups);
+      if (user?.role === 'INSTRUCTOR' && user.email) {
+        if (demo) {
+          const instructors = await instructorsApi.list(orgId, true);
+          setInstructorId(instructors.find((item) => item.email.toLowerCase() === user.email.toLowerCase())?.id ?? null);
+        } else {
+          try {
+            const me = await instructorsApi.getMe();
+            setInstructorId(me.id);
+          } catch {
+            setInstructorId(null);
+          }
+        }
+      }
     }
     catch (error) { setLoadError(t(getErrorPresentation(error).description)); }
     finally { setLoading(false); }

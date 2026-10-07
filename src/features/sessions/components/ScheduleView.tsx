@@ -22,8 +22,18 @@ export default function ScheduleView({ instructorOnly = false }: { instructorOnl
       const [nextSessions, nextGroups] = await Promise.all([sessionsApi.list(orgId, demo), groupsApi.list(orgId, demo)]);
       setSessions(nextSessions); setGroups(nextGroups);
       if (instructorOnly && user?.email) {
-        const instructors = await instructorsApi.list(orgId, demo); const self = instructors.find((item) => item.email.toLowerCase() === user.email.toLowerCase());
-        setInstructorGroupIds(self ? nextGroups.filter((group) => group.instructorIds?.includes(self.id)).map((group) => group.id) : []);
+        if (demo) {
+          const instructors = await instructorsApi.list(orgId, true);
+          const self = instructors.find((item) => item.email.toLowerCase() === user.email.toLowerCase());
+          setInstructorGroupIds(self ? nextGroups.filter((group) => group.instructorIds?.includes(self.id)).map((group) => group.id) : []);
+        } else {
+          try {
+            const me = await instructorsApi.getMe();
+            setInstructorGroupIds(me ? nextGroups.filter((group) => group.instructorIds?.includes(me.id)).map((group) => group.id) : []);
+          } catch {
+            setInstructorGroupIds([]);
+          }
+        }
       }
     } catch (reason) { setError(t(getErrorPresentation(reason).description)); }
     finally { setLoading(false); }
