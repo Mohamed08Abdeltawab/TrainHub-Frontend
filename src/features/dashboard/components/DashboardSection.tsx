@@ -69,7 +69,7 @@ export default function DashboardSection() {
     return <SessionsList />;
   }
 
-  if (active === 'Attendance' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR' || role === 'STUDENT')) {
+  if (active === 'Attendance' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR' || role === 'STUDENT' || role === 'SUPER_ADMIN')) {
     return <AttendancePage />;
   }
 
@@ -77,8 +77,12 @@ export default function DashboardSection() {
     return <ScheduleView instructorOnly />;
   }
 
-  if (active === 'Schedule' && role === 'ORG_ADMIN') {
+  if (active === 'Schedule' && (role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) {
     return <ScheduleView />;
+  }
+
+  if ((active === 'Schedule' || active === 'My schedule') && role === 'STUDENT') {
+    return <ScheduleView studentOnly />;
   }
 
   if (active === 'Overview' && role === 'ORG_ADMIN') {

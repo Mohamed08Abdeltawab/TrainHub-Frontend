@@ -39,12 +39,40 @@ interface RegisterResponse {
 }
 
 const storageKey = (orgId: string) => `trainhub.organization.${orgId}.instructors`;
+const getSeedInstructors = (): Instructor[] => [
+  {
+    id: 'user-instructor',
+    name: 'Sarah Jenkins',
+    email: 'sarah.jenkins@trainhub.io',
+    phone: '+1 (555) 123-4567',
+    expertise: 'Fullstack Web Development',
+    status: 'Active',
+    createdAt: new Date().toISOString(),
+  },
+];
+
 const readDemoInstructors = (orgId: string): Instructor[] => {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(storageKey(orgId)) ?? '[]');
-    if (!Array.isArray(value)) return [];
-    return value.filter((item): item is Instructor => Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.email === 'string'));
-  } catch { return []; }
+    const raw = localStorage.getItem(storageKey(orgId));
+    if (!raw) {
+      const seeded = getSeedInstructors();
+      writeDemoInstructors(orgId, seeded);
+      return seeded;
+    }
+    const value: unknown = JSON.parse(raw);
+    if (Array.isArray(value)) {
+      const valid = value.filter(
+        (item): item is Instructor =>
+          Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.email === 'string')
+      );
+      if (valid.length > 0) return valid;
+    }
+    const seeded = getSeedInstructors();
+    writeDemoInstructors(orgId, seeded);
+    return seeded;
+  } catch {
+    return getSeedInstructors();
+  }
 };
 const writeDemoInstructors = (orgId: string, instructors: Instructor[]) => localStorage.setItem(storageKey(orgId), JSON.stringify(instructors));
 
