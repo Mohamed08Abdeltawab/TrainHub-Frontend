@@ -45,12 +45,71 @@ interface RegisterResponse {
 }
 
 const storageKey = (orgId: string) => `trainhub.organization.${orgId}.students`;
+const getSeedStudents = (): Student[] => [
+  {
+    id: 'user-student',
+    name: 'David Kim',
+    email: 'david.kim@trainhub.io',
+    phone: '+1 (555) 234-5678',
+    course: 'Fullstack Web Development',
+    status: 'Active',
+    studentCode: 'STU-001',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'student-2',
+    name: 'Nour El-Din',
+    email: 'nour.eldin@trainhub.io',
+    phone: '+1 (555) 345-6789',
+    course: 'Fullstack Web Development',
+    status: 'Active',
+    studentCode: 'STU-002',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'student-3',
+    name: 'Yara Mansour',
+    email: 'yara.mansour@trainhub.io',
+    phone: '+1 (555) 456-7890',
+    course: 'Fullstack Web Development',
+    status: 'Active',
+    studentCode: 'STU-003',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'student-4',
+    name: 'Karim Zaki',
+    email: 'karim.zaki@trainhub.io',
+    phone: '+1 (555) 567-8901',
+    course: 'Fullstack Web Development',
+    status: 'Active',
+    studentCode: 'STU-004',
+    createdAt: new Date().toISOString(),
+  },
+];
+
 const readDemoStudents = (orgId: string): Student[] => {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(storageKey(orgId)) ?? '[]');
-    if (!Array.isArray(value)) return [];
-    return value.filter((item): item is Student => Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.email === 'string'));
-  } catch { return []; }
+    const raw = localStorage.getItem(storageKey(orgId));
+    if (!raw) {
+      const seeded = getSeedStudents();
+      writeDemoStudents(orgId, seeded);
+      return seeded;
+    }
+    const value: unknown = JSON.parse(raw);
+    if (Array.isArray(value)) {
+      const valid = value.filter(
+        (item): item is Student =>
+          Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.email === 'string')
+      );
+      if (valid.length > 0) return valid;
+    }
+    const seeded = getSeedStudents();
+    writeDemoStudents(orgId, seeded);
+    return seeded;
+  } catch {
+    return getSeedStudents();
+  }
 };
 const writeDemoStudents = (orgId: string, students: Student[]) => localStorage.setItem(storageKey(orgId), JSON.stringify(students));
 

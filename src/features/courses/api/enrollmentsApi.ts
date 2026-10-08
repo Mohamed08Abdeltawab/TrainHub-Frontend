@@ -67,11 +67,32 @@ function mapEnrollment(dto: BackendEnrollmentDto): Enrollment {
 
 const storageKey = (orgId: string, courseId: string) => `trainhub.organization.${orgId}.course.${courseId}.students`;
 
+function getSeedEnrollments(courseId: string): Enrollment[] {
+  if (courseId === 'demo-course-web') {
+    return [
+      { studentId: 'user-student', status: 'Active', enrolledAt: new Date().toISOString() },
+      { studentId: 'student-2', status: 'Active', enrolledAt: new Date().toISOString() },
+      { studentId: 'student-3', status: 'Active', enrolledAt: new Date().toISOString() },
+      { studentId: 'student-4', status: 'Active', enrolledAt: new Date().toISOString() },
+    ];
+  }
+  return [];
+}
+
 function read(orgId: string, courseId: string): Enrollment[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(storageKey(orgId, courseId)) ?? '[]');
+    const raw = localStorage.getItem(storageKey(orgId, courseId));
+    if (!raw) {
+      const seeded = getSeedEnrollments(courseId);
+      if (seeded.length > 0) {
+        write(orgId, courseId, seeded);
+        return seeded;
+      }
+      return [];
+    }
+    const value: unknown = JSON.parse(raw);
     if (!Array.isArray(value)) return [];
-    return value.flatMap((item): Enrollment[] => {
+    const parsed = value.flatMap((item): Enrollment[] => {
       if (typeof item === 'string') return [{ studentId: item, status: 'Active' }];
       if (!item || typeof item.studentId !== 'string') return [];
       const status: EnrollmentStatus = ['Active', 'Completed', 'Withdrawn', 'Pending'].includes(item.status)
@@ -85,8 +106,15 @@ function read(orgId: string, courseId: string): Enrollment[] {
         },
       ];
     });
-  } catch {
+    if (parsed.length > 0) return parsed;
+    const seeded = getSeedEnrollments(courseId);
+    if (seeded.length > 0) {
+      write(orgId, courseId, seeded);
+      return seeded;
+    }
     return [];
+  } catch {
+    return getSeedEnrollments(courseId);
   }
 }
 

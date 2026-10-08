@@ -94,16 +94,57 @@ function mapCourseGroup(dto: BackendCourseGroupDto): CourseGroup {
 
 const key = (orgId: string) => `trainhub.organization.${orgId}.groups`;
 
+function getSeedGroups(): CourseGroup[] {
+  return [
+    {
+      id: 'demo-cohort-a',
+      name: 'Cohort A - Fullstack Web Development',
+      courseId: 'demo-course-web',
+      courseTitle: 'Fullstack Web Development',
+      startDate: '2026-09-01',
+      endDate: '2026-12-01',
+      capacity: 30,
+      instructorIds: ['user-instructor', 'inst-sarah-jenkins'],
+      enrolledCount: 4,
+      status: 'Active',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'demo-cohort-b',
+      name: 'Cohort B - Modern UI/UX Design',
+      courseId: 'demo-course-design',
+      courseTitle: 'Modern UI/UX Design',
+      startDate: '2026-09-15',
+      endDate: '2026-12-15',
+      capacity: 25,
+      instructorIds: ['user-instructor', 'inst-sarah-jenkins'],
+      enrolledCount: 18,
+      status: 'Active',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
 function read(orgId: string): CourseGroup[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(key(orgId)) ?? '[]');
-    return Array.isArray(value)
-      ? value.filter((item): item is CourseGroup =>
-          Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.courseId === 'string')
-        )
-      : [];
+    const raw = localStorage.getItem(key(orgId));
+    if (!raw) {
+      const seeded = getSeedGroups();
+      write(orgId, seeded);
+      return seeded;
+    }
+    const value: unknown = JSON.parse(raw);
+    if (Array.isArray(value)) {
+      const valid = value.filter((item): item is CourseGroup =>
+        Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.courseId === 'string')
+      );
+      if (valid.length > 0) return valid;
+    }
+    const seeded = getSeedGroups();
+    write(orgId, seeded);
+    return seeded;
   } catch {
-    return [];
+    return getSeedGroups();
   }
 }
 
