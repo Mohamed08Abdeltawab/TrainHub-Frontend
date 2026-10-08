@@ -36,11 +36,56 @@ interface PagedResult<T> {
 }
 
 const key = (orgId: string) => `trainhub.organization.${orgId}.courses`;
+const defaultSeedCourses: Course[] = [
+  {
+    id: 'demo-course-web',
+    title: 'Fullstack Web Development',
+    description: 'Modern full-stack web development with React, Node.js, and TypeScript.',
+    category: 'Web Development',
+    level: 'Intermediate',
+    durationHours: 60,
+    status: 'Active',
+    createdAt: '2026-09-01T00:00:00Z',
+  },
+  {
+    id: 'demo-course-design',
+    title: 'Modern UI/UX Design',
+    description: 'Principles of modern digital design, accessibility, and user research.',
+    category: 'Design',
+    level: 'Beginner',
+    durationHours: 40,
+    status: 'Active',
+    createdAt: '2026-09-15T00:00:00Z',
+  },
+  {
+    id: 'demo-course-git',
+    title: 'Agile & Git Team Workflows',
+    description: 'Collaborative development workflows, branching strategies, and CI/CD.',
+    category: 'Software Engineering',
+    level: 'Advanced',
+    durationHours: 20,
+    status: 'Active',
+    createdAt: '2026-09-20T00:00:00Z',
+  },
+];
+
 function read(orgId: string): Course[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(key(orgId)) ?? '[]');
-    return Array.isArray(value) ? value.filter((item): item is Course => Boolean(item && typeof item.id === 'string' && typeof item.title === 'string')) : [];
-  } catch { return []; }
+    const raw = localStorage.getItem(key(orgId));
+    if (!raw) {
+      write(orgId, defaultSeedCourses);
+      return defaultSeedCourses;
+    }
+    const value: unknown = JSON.parse(raw);
+    const parsed = Array.isArray(value)
+      ? value.filter((item): item is Course => Boolean(item && typeof item.id === 'string' && typeof item.title === 'string'))
+      : [];
+    if (parsed.length > 0) return parsed;
+    write(orgId, defaultSeedCourses);
+    return defaultSeedCourses;
+  } catch {
+    return defaultSeedCourses;
+  }
 }
 function write(orgId: string, courses: Course[]) { localStorage.setItem(key(orgId), JSON.stringify(courses)); }
 

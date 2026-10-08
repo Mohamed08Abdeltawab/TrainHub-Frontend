@@ -13,7 +13,7 @@ export function useDashboardData(role: DashboardRole, enabled = true) {
       try {
         return await dashboardApi.getDashboardContent(role);
       } catch (error) {
-        if (user?.demo) return dashboardContent[role];
+        if (role === 'STUDENT' || user?.demo) return dashboardContent[role];
         throw error;
       }
     },

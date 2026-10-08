@@ -30,6 +30,7 @@ export default function Login() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -48,14 +49,22 @@ export default function Login() {
       return;
     }
     const destination = locationState?.from;
-    let targetPath = destination ?? demoUsers[result].path;
-    if (!destination && result === 'ORG_ADMIN') {
-      try {
-        const session = JSON.parse(localStorage.getItem('trainhub.session') ?? '{}');
-        if (session.organizationId) {
-          targetPath = `/admin/organizations/${session.organizationId}`;
-        }
-      } catch { /* fallback to default */ }
+    let targetPath = demoUsers[result].path;
+    if (result === 'STUDENT') {
+      targetPath = (destination && destination.startsWith('/student')) ? destination : demoUsers.STUDENT.path;
+    } else if (result === 'INSTRUCTOR') {
+      targetPath = (destination && destination.startsWith('/instructor')) ? destination : demoUsers.INSTRUCTOR.path;
+    } else if (result === 'ORG_ADMIN' || result === 'SUPER_ADMIN') {
+      if (destination && destination.startsWith('/admin')) {
+        targetPath = destination;
+      } else {
+        try {
+          const session = JSON.parse(localStorage.getItem('trainhub.session') ?? '{}');
+          if (session.organizationId) {
+            targetPath = `/admin/organizations/${session.organizationId}`;
+          }
+        } catch { /* fallback to default */ }
+      }
     }
     navigate(targetPath, { replace: true });
   };
@@ -65,6 +74,11 @@ export default function Login() {
       title="Welcome back"
       description="Sign in to continue to your training workspace."
     >
+      {locationState?.registeredEmail && !error && (
+        <Alert className="mb-4" variant="success">
+          {t('Account created successfully! Please sign in with your credentials.')}
+        </Alert>
+      )}
       {user && <Alert className="mb-4" variant="info">{t('You are signed in as')} {user.name}. {t('Sign out from your workspace to use a different account.')}</Alert>}
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -135,6 +149,32 @@ export default function Login() {
             {t('Preview dashboards')}
           </span>
           <Separator className="flex-1" />
+        </div>
+        <div className="mb-2 flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>{t('Quick-fill credentials:')}</span>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => { setValue('email', demoUsers.STUDENT.email); setValue('password', 'demo1234'); setError(''); }}
+              className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted"
+            >
+              {t('Learner')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setValue('email', demoUsers.INSTRUCTOR.email); setValue('password', 'demo1234'); setError(''); }}
+              className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted"
+            >
+              {t('Instructor')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setValue('email', demoUsers.ORG_ADMIN.email); setValue('password', 'demo1234'); setError(''); }}
+              className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted"
+            >
+              {t('Admin')}
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-1 gap-2">
           {demoLinks.map((item) => (

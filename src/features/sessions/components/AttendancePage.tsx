@@ -105,17 +105,31 @@ export default function AttendancePage() {
           setStudentPercentage(pct);
         } else {
           // Real student mode: fetch student-scoped attendance directly
-          const records = await attendanceApi.listAll(orgId, false);
-          setStudentRecords(records);
+          try {
+            const records = await attendanceApi.listAll(orgId, false);
+            setStudentRecords(records);
 
-          const studentId = records[0]?.studentId;
-          if (studentId) {
-            try {
-              const pct = await attendanceApi.getPercentage(studentId, undefined, false, orgId);
-              setStudentPercentage(pct);
-            } catch {
-              // percentage calculation fallback below
+            const studentId = records[0]?.studentId;
+            if (studentId) {
+              try {
+                const pct = await attendanceApi.getPercentage(studentId, undefined, false, orgId);
+                setStudentPercentage(pct);
+              } catch {
+                // percentage calculation fallback below
+              }
             }
+          } catch {
+            // If backend is unreachable, fallback to demo student attendance
+            const [allRecords, allSessions, nextGroups] = await Promise.all([
+              attendanceApi.listAll(orgId, true),
+              sessionsApi.list(orgId, true),
+              groupsApi.list(orgId, true),
+            ]);
+            setSessions(allSessions);
+            setGroups(nextGroups);
+            setStudentRecords(allRecords);
+            const pct = await attendanceApi.getPercentage('user-student', undefined, true, orgId).catch(() => null);
+            setStudentPercentage(pct);
           }
         }
       } else {
