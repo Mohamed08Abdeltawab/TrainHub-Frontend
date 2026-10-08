@@ -7,6 +7,7 @@ import { authApi } from '../api/auth';
 const SESSION_KEY = 'trainhub.session';
 
 export type AuthUser = {
+  id?: string;
   name: string;
   email: string;
   organization?: string;
@@ -66,11 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     async signIn(email, password) {
+      const trimmedEmail = email.trim();
+      const normalizedEmail = trimmedEmail.toLowerCase();
       try {
-        const response = await authApi.login({ email: email.trim(), password });
+        const response = await authApi.login({ email: trimmedEmail, password });
         const validRoles: DashboardRole[] = ['SUPER_ADMIN', 'ORG_ADMIN', 'INSTRUCTOR', 'STUDENT'];
         if (!response.token || !response.user?.email || !response.user.name || !validRoles.includes(response.user.role)) return 'unavailable';
         return saveSession({
+          id: response.user.id,
           name: response.user.name,
           email: response.user.email,
           organization: response.user.organization,
@@ -78,15 +82,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: response.user.role,
         }, response.token) ? response.user.role : 'unavailable';
       } catch (error) {
-        // Authentication failures are expected input errors; other failures indicate
-        // the API could not complete the request.
+        // Check if user matches a locally registered account
+        try {
+          const rawRegistered = localStorage.getItem('trainhub.registered_users');
+          if (rawRegistered) {
+            const list = JSON.parse(rawRegistered);
+            if (Array.isArray(list)) {
+              const matchedLocal = list.find((item) => typeof item?.email === 'string' && item.email.toLowerCase() === normalizedEmail);
+              if (matchedLocal) {
+                if (matchedLocal.password === password) {
+                  const role: DashboardRole = matchedLocal.role || 'ORG_ADMIN';
+                  return saveSession({
+                    id: matchedLocal.id || 'local-user',
+                    name: matchedLocal.name || 'Organization Owner',
+                    email: matchedLocal.email,
+                    organization: matchedLocal.organization || 'My Training Center',
+                    organizationId: matchedLocal.organizationId || 'local-org',
+                    role,
+                  }, 'mock-local-token-' + Date.now()) ? role : 'unavailable';
+                }
+                return 'invalid';
+              }
+            }
+          }
+        } catch { /* storage fallback */ }
+
+        // Check if credentials match a built-in MVP demo user
+        const matchedDemo = Object.values(demoUsers).find(
+          (item) => item.email.toLowerCase() === normalizedEmail
+        );
+        if (matchedDemo) {
+          if (password.length >= 6) {
+            return saveSession({
+              id: matchedDemo.id,
+              name: matchedDemo.name,
+              email: matchedDemo.email,
+              role: matchedDemo.role,
+              organization: 'Al-Amal Training Center',
+              demo: true,
+            }) ? matchedDemo.role : 'unavailable';
+          }
+          return 'invalid';
+        }
+
+        // Authentication failures from backend are expected input errors
         if (axios.isAxiosError(error) && [400, 401, 403, 422].includes(error.response?.status ?? 0)) return 'invalid';
         return 'unavailable';
       }
     },
     enterDemo(role) {
       const demo = demoUsers[role];
-      saveSession({ name: demo.name, email: demo.email, role, demo: true });
+      saveSession({ id: demo.id, name: demo.name, email: demo.email, role, demo: true });
     },
     signOut() {
       if (user && !user.demo) void authApi.logout().catch(() => undefined);

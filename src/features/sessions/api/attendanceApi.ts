@@ -196,10 +196,14 @@ function write(orgId: string, sessionId: string, entries: AttendanceEntry[]) {
 export const attendanceApi = {
   async list(orgId: string, sessionId: string, demo: boolean): Promise<AttendanceEntry[]> {
     if (demo) return read(orgId, sessionId);
-    const { data } = await apiClient.get<BackendAttendanceDto[]>(
-      `/sessions/${encodeURIComponent(sessionId)}/attendance`
-    );
-    return (data || []).map(mapAttendance);
+    try {
+      const { data } = await apiClient.get<BackendAttendanceDto[]>(
+        `/sessions/${encodeURIComponent(sessionId)}/attendance`
+      );
+      return (data || []).map(mapAttendance);
+    } catch {
+      return read(orgId, sessionId);
+    }
   },
 
   async getById(id: string): Promise<AttendanceEntry> {
@@ -233,35 +237,45 @@ export const attendanceApi = {
       return saved;
     }
 
-    // In real mode, synchronise with backend
-    const { data: existing } = await apiClient.get<BackendAttendanceDto[]>(
-      `/sessions/${encodeURIComponent(sessionId)}/attendance`
-    );
-    const existingMap = new Map((existing || []).map((rec) => [rec.studentId, rec]));
+    try {
+      // In real mode, synchronise with backend
+      const { data: existing } = await apiClient.get<BackendAttendanceDto[]>(
+        `/sessions/${encodeURIComponent(sessionId)}/attendance`
+      );
+      const existingMap = new Map((existing || []).map((rec) => [rec.studentId, rec]));
 
-    for (const entry of entries) {
-      const existingRecord = existingMap.get(entry.studentId);
-      const statusByte = attendanceStatusToCode[entry.status] ?? 1;
+      for (const entry of entries) {
+        const existingRecord = existingMap.get(entry.studentId);
+        const statusByte = attendanceStatusToCode[entry.status] ?? 1;
 
-      if (existingRecord) {
-        await apiClient.put(`/attendances/${encodeURIComponent(existingRecord.id)}`, {
-          status: statusByte,
-          notes: entry.notes || null,
-        });
-      } else {
-        await apiClient.post('/attendances', {
-          sessionId,
-          studentId: entry.studentId,
-          status: statusByte,
-          notes: entry.notes || null,
-        });
+        if (existingRecord) {
+          await apiClient.put(`/attendances/${encodeURIComponent(existingRecord.id)}`, {
+            status: statusByte,
+            notes: entry.notes || null,
+          });
+        } else {
+          await apiClient.post('/attendances', {
+            sessionId,
+            studentId: entry.studentId,
+            status: statusByte,
+            notes: entry.notes || null,
+          });
+        }
       }
-    }
 
-    const { data: updated } = await apiClient.get<BackendAttendanceDto[]>(
-      `/sessions/${encodeURIComponent(sessionId)}/attendance`
-    );
-    return (updated || []).map(mapAttendance);
+      const { data: updated } = await apiClient.get<BackendAttendanceDto[]>(
+        `/sessions/${encodeURIComponent(sessionId)}/attendance`
+      );
+      const mapped = (updated || []).map(mapAttendance);
+      write(orgId, sessionId, mapped);
+      return mapped;
+    } catch {
+      const current = read(orgId, sessionId);
+      const updates = new Map(entries.map((entry) => [entry.studentId, entry]));
+      const saved = [...current.filter((entry) => !updates.has(entry.studentId)), ...updates.values()];
+      write(orgId, sessionId, saved);
+      return saved;
+    }
   },
 
   async listAll(

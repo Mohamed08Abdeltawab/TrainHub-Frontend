@@ -38,16 +38,33 @@ export default function Register() {
         organization: values.organization.trim(),
         email: values.email.trim(),
         password: values.password,
+        confirmPassword: values.confirmPassword,
       });
     } catch (requestError) {
-      const responseMessage = axios.isAxiosError(requestError)
-        ? (requestError.response?.data as { message?: unknown } | undefined)?.message
-        : undefined;
-      const message = typeof responseMessage === 'string'
-        ? responseMessage
-        : axios.isAxiosError(requestError) && requestError.response?.status === 409
-          ? 'An account with this email already exists. Sign in instead.'
-          : 'We could not create your account. Check your connection and try again.';
+      let message = 'We could not create your account. Check your connection and try again.';
+      if (axios.isAxiosError(requestError)) {
+        const data = requestError.response?.data as
+          | { message?: unknown; detail?: unknown; title?: unknown; errors?: Record<string, string[]> }
+          | undefined;
+        if (requestError.response?.status === 409) {
+          message = typeof data?.detail === 'string'
+            ? data.detail
+            : typeof data?.message === 'string'
+            ? data.message
+            : 'An account with this email already exists. Sign in instead.';
+        } else if (typeof data?.detail === 'string') {
+          message = data.detail;
+        } else if (typeof data?.message === 'string') {
+          message = data.message;
+        } else if (data?.errors && typeof data.errors === 'object') {
+          const firstErr = Object.values(data.errors).flat()[0];
+          if (typeof firstErr === 'string') message = firstErr;
+        } else if (typeof data?.title === 'string') {
+          message = data.title;
+        }
+      } else if (requestError && typeof (requestError as { message?: unknown }).message === 'string') {
+        message = (requestError as { message: string }).message;
+      }
       setError(t(message));
       return;
     }
