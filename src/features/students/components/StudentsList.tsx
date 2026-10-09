@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { Search, UserPlus, Users, Pencil, Mail, Phone, BookOpen, Eye, CalendarDays, FilterX } from 'lucide-react';
+import { Search, UserPlus, Users, Pencil, Mail, Phone, BookOpen, Eye, CalendarDays, FilterX, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, DataTable, Badge, Skeleton } from '@/components/ui';
 import type { DataTableColumn } from '@/components/ui/DataTable';
-import { getErrorPresentation } from '@/utils/errorPresentation';
+import { getErrorPresentation, getFieldErrors } from '@/utils/errorPresentation';
 import { studentsApi, type Student, type StudentInput, type StudentStatus } from '../api/studentsApi';
 
 const emptyForm: StudentInput = { name: '', email: '', phone: '', course: '', status: 'Active' };
@@ -133,7 +133,17 @@ export default function StudentsList() {
       setModalOpen(false);
     } catch (error) {
       const presentation = getErrorPresentation(error);
-      setSaveError(t(presentation.title === 'Access denied' ? 'You do not have permission to save student changes.' : presentation.description));
+      const fieldErrors = getFieldErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      }
+      setSaveError(
+        t(
+          presentation.title === 'Access denied'
+            ? 'You do not have permission to save student changes.'
+            : presentation.description
+        )
+      );
     } finally {
       setSaving(false);
     }
@@ -344,6 +354,7 @@ export default function StudentsList() {
             caption={t('Students')}
             loading={loading}
             error={loadError || undefined}
+            onErrorRetry={() => void loadStudents()}
             pageSize={8}
             emptyTitle={isFiltered ? t('No students match your search') : t('No students yet')}
             emptyDescription={
@@ -367,13 +378,6 @@ export default function StudentsList() {
             }
           />
         </CardContent>
-        {loadError && (
-          <div className="flex justify-end border-t border-border p-3">
-            <Button variant="outline" size="sm" onClick={() => void loadStudents()}>
-              {t('Try again')}
-            </Button>
-          </div>
-        )}
       </Card>
 
       <Modal
@@ -443,9 +447,13 @@ export default function StudentsList() {
             </select>
           </label>
           {saveError && (
-            <p role="alert" className="text-xs text-destructive">
-              {saveError}
-            </p>
+            <div
+              role="alert"
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
           )}
         </form>
       </Modal>

@@ -87,5 +87,6 @@ export { TableSkeleton } from './TableSkeleton';
 export { default as PageLoading } from './PageLoading';
 export { default as DataTable } from './DataTable';
 export type { DataTableColumn } from './DataTable';
+export { default as ErrorState } from '../errors/ErrorState';
 export { default as Pagination } from './Pagination';
 

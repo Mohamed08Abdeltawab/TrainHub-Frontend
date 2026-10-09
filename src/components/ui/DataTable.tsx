@@ -9,6 +9,7 @@ import {
   TableCaption,
 } from './table';
 import EmptyState from './EmptyState';
+import ErrorState from '../errors/ErrorState';
 import Pagination from './Pagination';
 import Skeleton from './Skeleton';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -29,6 +30,7 @@ type Props<T> = {
   caption: string;
   loading?: boolean;
   error?: string;
+  onErrorRetry?: () => void;
   pageSize?: number;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -43,6 +45,7 @@ export default function DataTable<T>({
   caption,
   loading = false,
   error,
+  onErrorRetry,
   pageSize = 8,
   emptyTitle = 'No records yet',
   emptyDescription = 'Records will appear here when they are available.',
@@ -86,10 +89,12 @@ export default function DataTable<T>({
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card/60 shadow-sm">
       {error ? (
-        <div role="alert" className="p-6 text-center">
-          <p className="text-sm font-medium text-destructive">Could not load {caption.toLowerCase()}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{error}</p>
-        </div>
+        <ErrorState
+          title={`Could not load ${caption.toLowerCase()}`}
+          description={error}
+          onRetry={onErrorRetry}
+          className="rounded-none border-0 bg-transparent"
+        />
       ) : !loading && rows.length === 0 ? (
         <EmptyState title={emptyTitle} description={emptyDescription} icon={emptyIcon} action={emptyAction} />
       ) : (

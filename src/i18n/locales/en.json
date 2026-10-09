@@ -531,6 +531,12 @@
   "No students yet": "No students yet",
   "Try changing your search or status filter.": "Try changing your search or status filter.",
   "Add your first student to start building your directory.": "Add your first student to start building your directory.",
-  "Students will appear here when they are added to your center.": "Students will appear here when they are added to your center."
+  "Students will appear here when they are added to your center.": "Students will appear here when they are added to your center.",
+  "Breadcrumb": "Breadcrumb",
+  "Delete course": "Delete course",
+  "Are you sure you want to delete this course?": "Are you sure you want to delete this course?",
+  "Could not load courses": "Could not load courses",
+  "Could not load course groups": "Could not load course groups",
+  "You do not have permission to delete this course.": "You do not have permission to delete this course."
 }
 

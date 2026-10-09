@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarDays, Eye, FilterX, GraduationCap, Pencil, Plus, Search, Users } from 'lucide-react';
+import { CalendarDays, Eye, FilterX, GraduationCap, Pencil, Plus, Search, Users, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Modal, TableSkeleton } from '@/components/ui';
-import { getErrorPresentation } from '@/utils/errorPresentation';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, ErrorState, Input, Modal, TableSkeleton } from '@/components/ui';
+import { getErrorPresentation, getFieldErrors } from '@/utils/errorPresentation';
 import { coursesApi, type Course } from '../api/coursesApi';
 import { groupsApi, type CourseGroup, type CourseGroupInput, type CourseGroupStatus } from '../api/groupsApi';
 import { instructorsApi, type Instructor } from '@/features/instructors/api/instructorsApi';
@@ -121,7 +121,17 @@ export default function GroupsList() {
       setOpen(false);
     } catch (error) {
       const presentation = getErrorPresentation(error);
-      setSaveError(t(presentation.title === 'Access denied' ? 'You do not have permission to save group changes.' : presentation.description));
+      const fieldErrors = getFieldErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      }
+      setSaveError(
+        t(
+          presentation.title === 'Access denied'
+            ? 'You do not have permission to save group changes.'
+            : presentation.description
+        )
+      );
     } finally {
       setSaving(false);
     }
@@ -200,10 +210,12 @@ export default function GroupsList() {
           {loading ? (
             <TableSkeleton columns={6} rows={5} />
           ) : loadError ? (
-            <div className="py-8 text-center">
-              <p role="alert" className="mb-3 text-sm text-destructive">{loadError}</p>
-              <Button variant="outline" onClick={() => void load()}>{t('Try again')}</Button>
-            </div>
+            <ErrorState
+              title={t('Could not load course groups')}
+              description={loadError}
+              onRetry={() => void load()}
+              className="my-4"
+            />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<GraduationCap className="size-5" />}
@@ -503,7 +515,15 @@ export default function GroupsList() {
               ))}
             </select>
           </label>
-          {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
+          {saveError && (
+            <div
+              role="alert"
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
+          )}
         </form>
       </Modal>
     </section>

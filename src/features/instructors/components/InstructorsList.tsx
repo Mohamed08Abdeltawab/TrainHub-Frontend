@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { Search, UserPlus, Users, Pencil, Mail, Phone, BookOpen, Eye, CalendarDays, FilterX } from 'lucide-react';
+import { Search, UserPlus, Users, Pencil, Mail, Phone, BookOpen, Eye, CalendarDays, FilterX, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, DataTable, Badge, Skeleton } from '@/components/ui';
 import type { DataTableColumn } from '@/components/ui/DataTable';
-import { getErrorPresentation } from '@/utils/errorPresentation';
+import { getErrorPresentation, getFieldErrors } from '@/utils/errorPresentation';
 import { instructorsApi, type Instructor, type InstructorInput, type InstructorStatus } from '../api/instructorsApi';
 
 const emptyForm: InstructorInput = { name: '', email: '', phone: '', expertise: '', status: 'Active' };
@@ -135,6 +135,10 @@ export default function InstructorsList() {
       setModalOpen(false);
     } catch (error) {
       const presentation = getErrorPresentation(error);
+      const fieldErrors = getFieldErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      }
       setSaveError(
         t(
           presentation.title === 'Access denied'
@@ -365,6 +369,7 @@ export default function InstructorsList() {
             caption={t('Instructors')}
             loading={loading}
             error={loadError || undefined}
+            onErrorRetry={() => void loadInstructors()}
             pageSize={8}
             emptyTitle={
               isFiltered ? t('No instructors match your search') : t('No instructors yet')
@@ -389,13 +394,6 @@ export default function InstructorsList() {
             }
           />
         </CardContent>
-        {loadError && (
-          <div className="flex justify-end border-t border-border p-3">
-            <Button variant="outline" size="sm" onClick={() => void loadInstructors()}>
-              {t('Try again')}
-            </Button>
-          </div>
-        )}
       </Card>
 
       <Modal
@@ -467,9 +465,13 @@ export default function InstructorsList() {
             </select>
           </label>
           {saveError && (
-            <p role="alert" className="text-xs text-destructive">
-              {saveError}
-            </p>
+            <div
+              role="alert"
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
           )}
         </form>
       </Modal>

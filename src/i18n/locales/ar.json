@@ -496,5 +496,11 @@
   "No students yet": "لا يوجد طلاب بعد",
   "Try changing your search or status filter.": "جرّب تغيير معايير البحث أو تصفية الحالة.",
   "Add your first student to start building your directory.": "أضف أول طالب لبدء بناء دليل الطلاب.",
-  "Students will appear here when they are added to your center.": "سيظهر الطلاب هنا عند إضافتهم إلى المركز."
+  "Students will appear here when they are added to your center.": "سيظهر الطلاب هنا عند إضافتهم إلى المركز.",
+  "Breadcrumb": "مسار التنقل",
+  "Delete course": "حذف الدورة",
+  "Are you sure you want to delete this course?": "هل أنت متأكد من رغبتك في حذف هذه الدورة؟",
+  "Could not load courses": "تعذر تحميل الدورات التدريبية",
+  "Could not load course groups": "تعذر تحميل مجموعات الدورات",
+  "You do not have permission to delete this course.": "ليس لديك إذن لحذف هذه الدورة."
 }

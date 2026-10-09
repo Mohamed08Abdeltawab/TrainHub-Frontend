@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { BookOpen, Clock3, Pencil, Plus, Search, Eye, CalendarDays, Users, Trash2, FilterX } from 'lucide-react';
+import { BookOpen, Clock3, Pencil, Plus, Search, Eye, CalendarDays, Users, Trash2, FilterX, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, CourseCardSkeletonGrid, EmptyState, Input, Modal } from '@/components/ui';
-import { getErrorPresentation } from '@/utils/errorPresentation';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, CourseCardSkeletonGrid, EmptyState, ErrorState, Input, Modal } from '@/components/ui';
+import { getErrorPresentation, getFieldErrors } from '@/utils/errorPresentation';
 import { coursesApi, type Course, type CourseInput, type CourseStatus } from '../api/coursesApi';
 import CourseStudentsPanel from './CourseStudentsPanel';
 
@@ -31,6 +31,9 @@ export default function CoursesList() {
   const [errors, setErrors] = useState<Errors>({});
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,15 +74,26 @@ export default function CoursesList() {
     setOpen(true);
   };
 
-  const handleDeleteCourse = async (course: Course) => {
-    if (!window.confirm(t('Are you sure you want to delete this course? This action cannot be undone.'))) return;
+  const confirmDeleteCourse = async () => {
+    if (!deletingCourse) return;
+    setIsDeleting(true);
+    setDeleteError('');
     try {
-      await coursesApi.delete(orgId, course.id, demo);
-      setCourses((current) => current.filter((item) => item.id !== course.id));
+      await coursesApi.delete(orgId, deletingCourse.id, demo);
+      setCourses((current) => current.filter((item) => item.id !== deletingCourse.id));
+      setDeletingCourse(null);
       setSelected(null);
     } catch (error) {
       const presentation = getErrorPresentation(error);
-      alert(t(presentation.title === 'Access denied' ? 'You do not have permission to delete this course.' : presentation.description));
+      setDeleteError(
+        t(
+          presentation.title === 'Access denied'
+            ? 'You do not have permission to delete this course.'
+            : presentation.description
+        )
+      );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -103,7 +117,17 @@ export default function CoursesList() {
       setOpen(false);
     } catch (error) {
       const presentation = getErrorPresentation(error);
-      setSaveError(t(presentation.title === 'Access denied' ? 'You do not have permission to save course changes.' : presentation.description));
+      const fieldErrors = getFieldErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      }
+      setSaveError(
+        t(
+          presentation.title === 'Access denied'
+            ? 'You do not have permission to save course changes.'
+            : presentation.description
+        )
+      );
     } finally {
       setSaving(false);
     }
@@ -191,10 +215,12 @@ export default function CoursesList() {
           {loading ? (
             <CourseCardSkeletonGrid count={6} />
           ) : loadError ? (
-            <div className="py-8 text-center">
-              <p role="alert" className="mb-3 text-sm text-destructive">{loadError}</p>
-              <Button variant="outline" onClick={() => void load()}>{t('Try again')}</Button>
-            </div>
+            <ErrorState
+              title={t('Could not load courses')}
+              description={loadError}
+              onRetry={() => void load()}
+              className="my-4"
+            />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<BookOpen className="size-5" />}
@@ -292,7 +318,7 @@ export default function CoursesList() {
               <Button
                 variant="outline"
                 className="w-full sm:w-auto text-destructive hover:bg-destructive/10"
-                onClick={() => void handleDeleteCourse(selected)}
+                onClick={() => setDeletingCourse(selected)}
                 leadingIcon={<Trash2 className="size-4" />}
               >
                 {t('Delete')}
@@ -437,8 +463,63 @@ export default function CoursesList() {
               ))}
             </select>
           </label>
-          {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
+          {saveError && (
+            <div
+              role="alert"
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
+          )}
         </form>
+      </Modal>
+
+      {/* Delete Course Confirmation Modal */}
+      <Modal
+        open={Boolean(deletingCourse)}
+        onClose={() => {
+          if (!isDeleting) setDeletingCourse(null);
+        }}
+        title={t('Delete course')}
+        description={t('Are you sure you want to delete this course?')}
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDeleting}
+              onClick={() => setDeletingCourse(null)}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              loading={isDeleting}
+              loadingLabel={t('Deleting...')}
+              onClick={() => void confirmDeleteCourse()}
+            >
+              {t('Delete')}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-2 text-sm">
+          <p className="font-medium text-foreground">{deletingCourse?.title}</p>
+          <p className="text-xs text-muted-foreground">
+            {deletingCourse?.category} · {deletingCourse?.durationHours} {t('hours')}
+          </p>
+          {deleteError && (
+            <div
+              role="alert"
+              className="mt-2 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{deleteError}</span>
+            </div>
+          )}
+        </div>
       </Modal>
     </section>
   );
