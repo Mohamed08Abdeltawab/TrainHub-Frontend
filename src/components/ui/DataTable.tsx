@@ -32,6 +32,8 @@ type Props<T> = {
   pageSize?: number;
   emptyTitle?: string;
   emptyDescription?: string;
+  emptyIcon?: ReactNode;
+  emptyAction?: ReactNode;
 };
 
 export default function DataTable<T>({
@@ -44,6 +46,8 @@ export default function DataTable<T>({
   pageSize = 8,
   emptyTitle = 'No records yet',
   emptyDescription = 'Records will appear here when they are available.',
+  emptyIcon,
+  emptyAction,
 }: Props<T>) {
   const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [page, setPage] = useState(0);
@@ -87,7 +91,7 @@ export default function DataTable<T>({
           <p className="mt-1 text-xs text-muted-foreground">{error}</p>
         </div>
       ) : !loading && rows.length === 0 ? (
-        <EmptyState title={emptyTitle} description={emptyDescription} />
+        <EmptyState title={emptyTitle} description={emptyDescription} icon={emptyIcon} action={emptyAction} />
       ) : (
         <>
           <Table>

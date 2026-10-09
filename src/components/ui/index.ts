@@ -82,7 +82,10 @@ export { default as Spinner } from './Spinner';
 export { default as EmptyState } from './EmptyState';
 export { default as FormSection } from './FormSection';
 export { default as DashboardSkeleton } from './DashboardSkeleton';
+export { CourseCardSkeleton, CourseCardSkeletonGrid } from './CourseCardSkeleton';
+export { TableSkeleton } from './TableSkeleton';
 export { default as PageLoading } from './PageLoading';
 export { default as DataTable } from './DataTable';
 export type { DataTableColumn } from './DataTable';
 export { default as Pagination } from './Pagination';
+
