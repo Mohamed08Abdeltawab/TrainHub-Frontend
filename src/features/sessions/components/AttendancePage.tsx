@@ -15,7 +15,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { cn } from '@/lib/utils';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Skeleton, TableSkeleton } from '@/components/ui';
 import { getErrorPresentation } from '@/utils/errorPresentation';
 import { groupsApi, type CourseGroup } from '@/features/courses/api/groupsApi';
 import { enrollmentsApi } from '@/features/courses/api/enrollmentsApi';
@@ -420,11 +420,26 @@ export default function AttendancePage() {
       </header>
 
       {loading ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground" role="status">
-            {t('Loading attendance...')}
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {Array.from({ length: 5 }, (_, i) => (
+              <Card key={`att-skel-${i}`}>
+                <CardContent className="p-4 space-y-2">
+                  <Skeleton className="h-3 w-20 rounded" />
+                  <Skeleton className="h-7 w-14 rounded" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <CardHeader className="border-b border-border px-5 py-4">
+              <Skeleton className="h-4 w-36 rounded" />
+            </CardHeader>
+            <CardContent className="p-4">
+              <TableSkeleton columns={5} rows={5} />
+            </CardContent>
+          </Card>
+        </div>
       ) : loadError ? (
         <Card>
           <CardContent className="py-10 text-center">
@@ -659,19 +674,22 @@ export default function AttendancePage() {
                   </table>
                 </div>
               ) : (
-                <div className="py-12 text-center">
-                  <CalendarCheck2 className="mx-auto size-9 text-muted-foreground/80" />
-                  <p className="mt-3 text-sm font-medium">
-                    {t(hasActiveFilters ? 'No attendance records match these filters.' : 'No attendance records yet')}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t(
-                      hasActiveFilters
-                        ? 'Try clearing or adjusting your date and status filters.'
-                        : 'Attendance will appear after you attend scheduled cohort sessions.'
-                    )}
-                  </p>
-                </div>
+                <EmptyState
+                  icon={<CalendarCheck2 className="size-10 text-muted-foreground" />}
+                  title={t(hasActiveFilters ? 'No attendance records match these filters.' : 'No attendance records yet')}
+                  description={t(
+                    hasActiveFilters
+                      ? 'Try clearing or adjusting your date and status filters.'
+                      : 'Attendance will appear after you attend scheduled cohort sessions.'
+                  )}
+                  action={
+                    hasActiveFilters ? (
+                      <Button variant="outline" size="sm" onClick={resetFilters}>
+                        {t('Clear filters')}
+                      </Button>
+                    ) : undefined
+                  }
+                />
               )}
             </CardContent>
           </Card>
@@ -785,15 +803,11 @@ export default function AttendancePage() {
                 )}
 
                 {!roster.length ? (
-                  <div className="py-10 text-center">
-                    <Users className="mx-auto size-8 text-muted-foreground" />
-                    <p className="mt-3 text-sm font-medium">
-                      {t('No active learners are linked to this cohort.')}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {t('Link learners to the cohort course to build its attendance roster.')}
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon={<Users className="size-10 text-muted-foreground" />}
+                    title={t('No active learners are linked to this cohort.')}
+                    description={t('Link learners to the cohort course to build its attendance roster.')}
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[700px] text-start text-sm">
@@ -1038,9 +1052,22 @@ export default function AttendancePage() {
                   </table>
                 </div>
               ) : (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  {t('No attendance records match these filters.')}
-                </p>
+                <EmptyState
+                  icon={<CalendarCheck2 className="size-10 text-muted-foreground" />}
+                  title={t(hasActiveFilters ? 'No attendance records match these filters.' : 'No attendance records yet')}
+                  description={t(
+                    hasActiveFilters
+                      ? 'Try clearing or adjusting your date, cohort, session, and status filters.'
+                      : 'Attendance records will appear here as sessions are completed.'
+                  )}
+                  action={
+                    hasActiveFilters ? (
+                      <Button variant="outline" size="sm" onClick={resetFilters}>
+                        {t('Clear filters')}
+                      </Button>
+                    ) : undefined
+                  }
+                />
               )}
             </CardContent>
           </Card>

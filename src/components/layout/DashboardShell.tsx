@@ -82,8 +82,8 @@ export default function DashboardShell({
         />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div className="mx-auto w-full max-w-7xl p-3.5 sm:p-6 lg:p-8">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <Badge variant="default" className="mb-2 px-2.5 py-0.5 text-[10px]">
                   {t(content.section)} {t('Workspace')}
@@ -102,6 +102,7 @@ export default function DashboardShell({
                   variant="primary"
                   size="lg"
                   onClick={onPrimaryAction}
+                  className="w-full sm:w-auto"
                   leadingIcon={<Plus className="size-4" />}
                 >
                   {t(content.action)}

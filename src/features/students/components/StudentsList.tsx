@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { Search, UserPlus, Users, Pencil, Mail, Phone, BookOpen, Eye, CalendarDays } from 'lucide-react';
+import { Search, UserPlus, Users, Pencil, Mail, Phone, BookOpen, Eye, CalendarDays, FilterX, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, DataTable, Badge } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Modal, DataTable, Badge, Skeleton } from '@/components/ui';
 import type { DataTableColumn } from '@/components/ui/DataTable';
-import { getErrorPresentation } from '@/utils/errorPresentation';
+import { getErrorPresentation, getFieldErrors } from '@/utils/errorPresentation';
 import { studentsApi, type Student, type StudentInput, type StudentStatus } from '../api/studentsApi';
 
 const emptyForm: StudentInput = { name: '', email: '', phone: '', course: '', status: 'Active' };
@@ -77,6 +77,13 @@ export default function StudentsList() {
     });
   }, [students, query, statusFilter]);
 
+  const isFiltered = query.trim() !== '' || statusFilter !== 'All';
+
+  const resetFilters = () => {
+    setQuery('');
+    setStatusFilter('All');
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
@@ -126,7 +133,17 @@ export default function StudentsList() {
       setModalOpen(false);
     } catch (error) {
       const presentation = getErrorPresentation(error);
-      setSaveError(t(presentation.title === 'Access denied' ? 'You do not have permission to save student changes.' : presentation.description));
+      const fieldErrors = getFieldErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      }
+      setSaveError(
+        t(
+          presentation.title === 'Access denied'
+            ? 'You do not have permission to save student changes.'
+            : presentation.description
+        )
+      );
     } finally {
       setSaving(false);
     }
@@ -253,7 +270,11 @@ export default function StudentsList() {
             </span>
             <div>
               <p className="text-xs text-muted-foreground">{t('Total students')}</p>
-              <p className="text-xl font-semibold text-foreground">{students.length}</p>
+              {loading ? (
+                <Skeleton className="mt-1.5 h-6 w-12 rounded" />
+              ) : (
+                <p className="text-xl font-semibold text-foreground">{students.length}</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -261,18 +282,26 @@ export default function StudentsList() {
         <Card className="border-border bg-card/70">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">{t('Active')}</p>
-            <p className="mt-1 text-xl font-semibold text-foreground">
-              {students.filter((student) => student.status === 'Active').length}
-            </p>
+            {loading ? (
+              <Skeleton className="mt-1.5 h-6 w-10 rounded" />
+            ) : (
+              <p className="mt-1 text-xl font-semibold text-foreground">
+                {students.filter((student) => student.status === 'Active').length}
+              </p>
+            )}
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card/70">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">{t('Pending')}</p>
-            <p className="mt-1 text-xl font-semibold text-foreground">
-              {students.filter((student) => student.status === 'Pending').length}
-            </p>
+            {loading ? (
+              <Skeleton className="mt-1.5 h-6 w-10 rounded" />
+            ) : (
+              <p className="mt-1 text-xl font-semibold text-foreground">
+                {students.filter((student) => student.status === 'Pending').length}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -280,7 +309,7 @@ export default function StudentsList() {
       <Card className="border-border bg-card/70">
         <CardHeader className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-sm">{t('Student directory')}</CardTitle>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <label className="relative sm:w-64">
               <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -304,6 +333,17 @@ export default function StudentsList() {
                 </option>
               ))}
             </select>
+            {isFiltered && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="h-10 text-muted-foreground hover:text-foreground"
+              >
+                <FilterX className="me-1.5 size-4" />
+                {t('Clear')}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -314,24 +354,30 @@ export default function StudentsList() {
             caption={t('Students')}
             loading={loading}
             error={loadError || undefined}
+            onErrorRetry={() => void loadStudents()}
             pageSize={8}
-            emptyTitle={query || statusFilter !== 'All' ? t('No students match your search') : t('No students yet')}
+            emptyTitle={isFiltered ? t('No students match your search') : t('No students yet')}
             emptyDescription={
-              query || statusFilter !== 'All'
+              isFiltered
                 ? t('Try changing your search or status filter.')
                 : canManage
                   ? t('Add your first student to start building your directory.')
                   : t('Students will appear here when they are added to your center.')
             }
+            emptyAction={
+              isFiltered ? (
+                <Button variant="outline" size="sm" onClick={resetFilters}>
+                  {t('Clear filters')}
+                </Button>
+              ) : canManage ? (
+                <Button size="sm" onClick={openCreate}>
+                  <UserPlus className="me-1.5 size-4" />
+                  {t('Add student')}
+                </Button>
+              ) : undefined
+            }
           />
         </CardContent>
-        {loadError && (
-          <div className="flex justify-end border-t border-border p-3">
-            <Button variant="outline" size="sm" onClick={() => void loadStudents()}>
-              {t('Try again')}
-            </Button>
-          </div>
-        )}
       </Card>
 
       <Modal
@@ -342,14 +388,14 @@ export default function StudentsList() {
         title={t(editing ? 'Edit student' : 'Add student')}
         description={t(editing ? 'Update the student profile details.' : 'Add a student to your training center.')}
         footer={
-          <>
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
               {t('Cancel')}
             </Button>
             <Button type="submit" form="student-form" loading={saving} loadingLabel={t('Saving...')}>
               {t(editing ? 'Save changes' : 'Add student')}
             </Button>
-          </>
+          </div>
         }
       >
         <form id="student-form" onSubmit={submit} className="space-y-4" noValidate>
@@ -401,9 +447,13 @@ export default function StudentsList() {
             </select>
           </label>
           {saveError && (
-            <p role="alert" className="text-xs text-destructive">
-              {saveError}
-            </p>
+            <div
+              role="alert"
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
           )}
         </form>
       </Modal>

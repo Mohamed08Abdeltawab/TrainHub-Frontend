@@ -85,12 +85,11 @@ export default function DashboardSection() {
     return <ScheduleView studentOnly />;
   }
 
-  if (active === 'Overview' && role === 'ORG_ADMIN') {
-    return <OrganizationOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
-  }
-
   if (active === 'Overview') {
     if (dashboardQuery.isPending) return <DashboardSkeleton />;
+    if (role === 'ORG_ADMIN') {
+      return <OrganizationOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
+    }
     return (
       <DashboardOverview
         content={dashboardQuery.data ?? content}

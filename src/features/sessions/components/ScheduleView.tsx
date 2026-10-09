@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock3,
   ExternalLink,
+  FilterX,
   MapPin,
   User,
   Users,
@@ -15,7 +16,7 @@ import {
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useDashboardContext } from '@/layouts/DashboardLayout';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Modal } from '@/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Modal, Skeleton } from '@/components/ui';
 import { getErrorPresentation } from '@/utils/errorPresentation';
 import { groupsApi, type CourseGroup } from '@/features/courses/api/groupsApi';
 import { instructorsApi } from '@/features/instructors/api/instructorsApi';
@@ -215,19 +216,32 @@ export default function ScheduleView({
 
         <div className="flex flex-wrap items-center gap-2">
           {availableCohorts.length > 0 && (
-            <select
-              aria-label={t('Filter by cohort')}
-              value={selectedCohort}
-              onChange={(e) => setSelectedCohort(e.target.value)}
-              className="h-9 rounded-lg border border-border bg-input/40 px-3 text-xs"
-            >
-              <option value="All">{t('All cohorts')}</option>
-              {availableCohorts.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1.5">
+              <select
+                aria-label={t('Filter by cohort')}
+                value={selectedCohort}
+                onChange={(e) => setSelectedCohort(e.target.value)}
+                className="h-9 rounded-lg border border-border bg-input/40 px-3 text-xs text-foreground"
+              >
+                <option value="All">{t('All cohorts')}</option>
+                {availableCohorts.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+              {selectedCohort !== 'All' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCohort('All')}
+                  className="h-9 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <FilterX className="me-1 size-3.5" />
+                  {t('Clear')}
+                </Button>
+              )}
+            </div>
           )}
 
           <div className="flex items-center gap-1">
@@ -262,9 +276,25 @@ export default function ScheduleView({
       </header>
 
       {loading ? (
-        <p role="status" className="py-12 text-center text-sm text-muted-foreground">
-          {t('Loading schedule...')}
-        </p>
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-36 rounded" />
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 7 }, (_, i) => (
+              <Card key={`sched-skeleton-${i}`} className="min-h-48 border-border bg-card/70">
+                <CardHeader className="flex flex-row items-center justify-between border-b border-border px-4 py-3">
+                  <Skeleton className="h-4 w-24 rounded" />
+                </CardHeader>
+                <CardContent className="space-y-3 p-3">
+                  <div className="space-y-2 rounded-lg border border-border/50 p-3">
+                    <Skeleton className="h-4 w-3/4 rounded" />
+                    <Skeleton className="h-3 w-1/2 rounded" />
+                    <Skeleton className="h-3 w-1/3 rounded" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       ) : error ? (
         <div className="py-8 text-center">
           <p role="alert" className="mb-3 text-sm text-destructive">
@@ -275,17 +305,46 @@ export default function ScheduleView({
           </Button>
         </div>
       ) : (instructorOnly || studentOnly) && allowedGroupIds !== null && allowedGroupIds.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <CalendarDays className="mx-auto size-9 text-muted-foreground" />
-            <h2 className="mt-3 font-medium">
-              {instructorOnly ? t('No assigned cohorts') : t('No enrolled cohorts')}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {instructorOnly
-                ? t('Your schedule will show sessions after cohorts are assigned to your instructor profile.')
-                : t('Your schedule will show sessions after you are enrolled in a training cohort.')}
-            </p>
+        <Card className="border-border bg-card/70">
+          <CardContent className="p-0">
+            <EmptyState
+              icon={<CalendarDays className="size-10 text-muted-foreground" />}
+              title={instructorOnly ? t('No assigned cohorts') : t('No enrolled cohorts')}
+              description={
+                instructorOnly
+                  ? t('Your schedule will show sessions after cohorts are assigned to your instructor profile.')
+                  : t('Your schedule will show sessions after you are enrolled in a training cohort.')
+              }
+            />
+          </CardContent>
+        </Card>
+      ) : weekSessionsCount === 0 ? (
+        <Card className="border-border bg-card/70">
+          <CardContent className="p-0">
+            <EmptyState
+              icon={<CalendarDays className="size-10 text-muted-foreground" />}
+              title={selectedCohort !== 'All' ? t('No sessions match your filter') : t('No sessions scheduled this week')}
+              description={
+                selectedCohort !== 'All'
+                  ? t('Try changing your cohort filter or view another week.')
+                  : t('There are no training sessions scheduled for this week.')
+              }
+              action={
+                selectedCohort !== 'All' ? (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedCohort('All')}>
+                    {t('Clear filter')}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setWeek(startOfWeek(new Date(), { weekStartsOn: 0 }))}
+                  >
+                    {t('Today')}
+                  </Button>
+                )
+              }
+            />
           </CardContent>
         </Card>
       ) : (

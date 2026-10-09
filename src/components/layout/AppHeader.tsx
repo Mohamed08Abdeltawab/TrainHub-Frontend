@@ -70,7 +70,7 @@ export default function AppHeader({
           variant="ghost"
           size="icon"
           onClick={onOpenMobileNav}
-          aria-label="Open navigation menu"
+          aria-label={t('Open navigation menu')}
           className="size-9 text-muted-foreground hover:text-foreground md:hidden"
         >
           <Menu className="size-5" />
@@ -81,7 +81,7 @@ export default function AppHeader({
         <Separator orientation="vertical" className="hidden h-4 bg-border lg:block" />
 
         <nav
-          aria-label="Breadcrumb"
+          aria-label={t('Breadcrumb')}
           className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
         >
           <span className="transition-colors hover:text-foreground">TrainHub</span>

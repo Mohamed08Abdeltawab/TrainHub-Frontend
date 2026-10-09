@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarCheck, CalendarDays, Clock3, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { CalendarCheck, CalendarDays, Clock3, FilterX, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useDashboardContext } from '@/layouts/DashboardLayout';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Modal } from '@/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Input, Modal, Skeleton, TableSkeleton } from '@/components/ui';
 import { getErrorPresentation, getFieldErrors } from '@/utils/errorPresentation';
 import { groupsApi, type CourseGroup } from '@/features/courses/api/groupsApi';
 import { instructorsApi } from '@/features/instructors/api/instructorsApi';
@@ -121,6 +121,14 @@ export default function SessionsList() {
       })
       .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
   }, [sessions, manageableGroups, cohortFilter, statusFilter, query, groupById, user?.role]);
+
+  const isFiltered = query.trim() !== '' || statusFilter !== 'All' || cohortFilter !== 'All';
+
+  const resetFilters = () => {
+    setQuery('');
+    setStatusFilter('All');
+    setCohortFilter('All');
+  };
 
   const openForm = (session?: TrainingSession) => {
     setEditing(session ?? null);
@@ -299,21 +307,25 @@ export default function SessionsList() {
           { label: 'Scheduled sessions', value: filtered.filter((s) => s.status === 'Scheduled').length },
           { label: 'Completed sessions', value: filtered.filter((s) => s.status === 'Completed').length },
         ].map((item) => (
-          <Card key={item.label}>
+          <Card key={item.label} className="border-border bg-card/70">
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground">{t(item.label)}</p>
-              <p className="mt-1 text-xl font-semibold">{item.value}</p>
+              {loading ? (
+                <Skeleton className="mt-1.5 h-6 w-10 rounded" />
+              ) : (
+                <p className="mt-1 text-xl font-semibold text-foreground">{item.value}</p>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
+      <Card className="border-border bg-card/70">
         <CardHeader className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-sm">{t('Session list')}</CardTitle>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <label className="relative sm:w-64">
-              <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 aria-label={t('Search sessions')}
                 placeholder={t('Search sessions by title, cohort, or location')}
@@ -327,7 +339,7 @@ export default function SessionsList() {
               aria-label={t('Filter by cohort')}
               value={cohortFilter}
               onChange={(event) => setCohortFilter(event.target.value)}
-              className="h-10 min-w-36 rounded-lg border border-border bg-input/40 px-3 text-start text-sm"
+              className="h-10 min-w-36 rounded-lg border border-border bg-input/40 px-3 text-start text-sm text-foreground"
             >
               <option value="All">{t('All cohorts')}</option>
               {groups.map((group) => (
@@ -341,7 +353,7 @@ export default function SessionsList() {
               aria-label={t('Filter by status')}
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="h-10 min-w-36 rounded-lg border border-border bg-input/40 px-3 text-start text-sm"
+              className="h-10 min-w-36 rounded-lg border border-border bg-input/40 px-3 text-start text-sm text-foreground"
             >
               <option value="All">{t('All statuses')}</option>
               {(['Scheduled', 'Completed', 'Cancelled'] as TrainingSessionStatus[]).map((status) => (
@@ -350,15 +362,26 @@ export default function SessionsList() {
                 </option>
               ))}
             </select>
+            {isFiltered && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="h-10 text-muted-foreground hover:text-foreground"
+              >
+                <FilterX className="me-1.5 size-4" />
+                {t('Clear')}
+              </Button>
+            )}
           </div>
         </CardHeader>
 
-        <CardContent className="p-5">
-          {statusError && <p role="alert" className="mb-4 text-sm text-destructive">{statusError}</p>}
+        <CardContent className="p-0">
+          {statusError && <p role="alert" className="p-4 text-sm text-destructive">{statusError}</p>}
           {loading ? (
-            <p role="status" className="py-10 text-center text-sm text-muted-foreground">
-              {t('Loading sessions...')}
-            </p>
+            <div className="p-4">
+              <TableSkeleton columns={6} rows={5} />
+            </div>
           ) : loadError ? (
             <div className="py-8 text-center">
               <p role="alert" className="mb-3 text-sm text-destructive">{loadError}</p>
@@ -367,28 +390,34 @@ export default function SessionsList() {
               </Button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-12 text-center">
-              <CalendarDays className="mx-auto size-9 text-muted-foreground" />
-              <h2 className="mt-3 font-medium">
-                {query || statusFilter !== 'All' || cohortFilter !== 'All'
+            <EmptyState
+              icon={<CalendarDays className="size-10 text-muted-foreground" />}
+              title={
+                isFiltered
                   ? t('No sessions match your search')
                   : manageableGroups.length
                   ? t('No sessions yet')
-                  : t('No assigned cohorts')}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {query || statusFilter !== 'All' || cohortFilter !== 'All'
-                  ? t('Try changing your search or status filter.')
+                  : t('No assigned cohorts')
+              }
+              description={
+                isFiltered
+                  ? t('Try changing your search, status, or cohort filter.')
                   : manageableGroups.length
                   ? t('Create your first session to schedule a cohort meeting.')
-                  : t('Your schedule will show sessions after cohorts are assigned to your instructor profile.')}
-              </p>
-              {canManage && manageableGroups.length > 0 && !query && statusFilter === 'All' && cohortFilter === 'All' && (
-                <Button className="mt-4" onClick={() => openForm()}>
-                  {t('Create session')}
-                </Button>
-              )}
-            </div>
+                  : t('Your schedule will show sessions after cohorts are assigned to your instructor profile.')
+              }
+              action={
+                isFiltered ? (
+                  <Button variant="outline" size="sm" onClick={resetFilters}>
+                    {t('Clear filters')}
+                  </Button>
+                ) : canManage && manageableGroups.length > 0 ? (
+                  <Button size="sm" onClick={() => openForm()} leadingIcon={<Plus className="size-4" />}>
+                    {t('Create session')}
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[750px] text-start text-sm">
@@ -520,14 +549,14 @@ export default function SessionsList() {
           editing ? 'Update the session details.' : 'Schedule a session for a cohort.'
         )}
         footer={
-          <>
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" disabled={saving} onClick={() => setOpen(false)}>
               {t('Cancel')}
             </Button>
             <Button type="submit" form="session-form" loading={saving} loadingLabel={t('Saving...')}>
               {t(editing ? 'Save changes' : 'Create session')}
             </Button>
-          </>
+          </div>
         }
       >
         <form id="session-form" onSubmit={submit} noValidate className="space-y-4">
@@ -627,7 +656,7 @@ export default function SessionsList() {
         title={t('Delete session')}
         description={t('Are you sure you want to delete this session?')}
         footer={
-          <>
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -645,7 +674,7 @@ export default function SessionsList() {
             >
               {t('Delete')}
             </Button>
-          </>
+          </div>
         }
       >
         <div className="space-y-2 text-sm">
