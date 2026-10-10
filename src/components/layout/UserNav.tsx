@@ -61,7 +61,6 @@ export default function UserNav({
 
   const handleSelectUser = (user: DemoUser) => {
     onSelectRole(user.role);
-    navigate(`${user.path}?view=overview`);
   };
 
   const isRoleControlled = roleMenuOpen !== undefined && typeof onToggleRoleMenu === 'function';

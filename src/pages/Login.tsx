@@ -14,6 +14,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 type LoginValues = { email: string; password: string };
 
 const demoLinks = [
+  { label: 'Super Admin', to: '/admin/organizations/demo', role: 'SUPER_ADMIN' as DashboardRole },
   { label: 'Organization Admin', to: '/admin/organizations/demo', role: 'ORG_ADMIN' as DashboardRole },
   { label: 'Instructor', to: '/instructor', role: 'INSTRUCTOR' as DashboardRole },
   { label: 'Learner', to: '/student', role: 'STUDENT' as DashboardRole },
@@ -173,6 +174,13 @@ export default function Login() {
               className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted"
             >
               {t('Admin')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setValue('email', demoUsers.SUPER_ADMIN.email); setValue('password', 'demo1234'); setError(''); }}
+              className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted"
+            >
+              {t('Super Admin')}
             </button>
           </div>
         </div>

@@ -87,10 +87,10 @@ export default function NotificationMenu({
                 <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
                 <span>
                   <span className="block text-xs font-medium text-foreground">
-                    {notice.title}
+                    {t(notice.title)}
                   </span>
                   <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">
-                    {notice.detail}
+                    {t(notice.detail)}
                   </span>
                 </span>
               </button>
