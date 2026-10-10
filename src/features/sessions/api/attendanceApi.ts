@@ -115,6 +115,51 @@ const isEntry = (item: unknown): item is AttendanceEntry =>
   );
 
 function getSeedAttendanceForSession(sessionId: string): AttendanceEntry[] {
+  if (sessionId === 'demo-session-1') {
+    const today = new Date().toISOString();
+    return [
+      {
+        id: 'seed-att-1-1',
+        sessionId: 'demo-session-1',
+        studentId: 'user-student',
+        studentName: 'David Kim',
+        studentCode: 'STU-001',
+        status: 'Present',
+        markedAt: today,
+        markedBy: 'sarah.jenkins@trainhub.io',
+      },
+      {
+        id: 'seed-att-1-2',
+        sessionId: 'demo-session-1',
+        studentId: 'student-2',
+        studentName: 'Nour El-Din',
+        studentCode: 'STU-002',
+        status: 'Present',
+        markedAt: today,
+        markedBy: 'sarah.jenkins@trainhub.io',
+      },
+      {
+        id: 'seed-att-1-3',
+        sessionId: 'demo-session-1',
+        studentId: 'student-3',
+        studentName: 'Yara Mansour',
+        studentCode: 'STU-003',
+        status: 'Present',
+        markedAt: today,
+        markedBy: 'sarah.jenkins@trainhub.io',
+      },
+      {
+        id: 'seed-att-1-4',
+        sessionId: 'demo-session-1',
+        studentId: 'student-4',
+        studentName: 'Karim Zaki',
+        studentCode: 'STU-004',
+        status: 'Present',
+        markedAt: today,
+        markedBy: 'sarah.jenkins@trainhub.io',
+      },
+    ];
+  }
   if (sessionId === 'demo-session-2') {
     const pastDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
     return [
@@ -284,6 +329,10 @@ export const attendanceApi = {
     query?: AttendanceQueryParameters
   ): Promise<AttendanceEntry[]> {
     if (demo) {
+      // Ensure seed sessions have attendance primed if not present
+      read(orgId, 'demo-session-1');
+      read(orgId, 'demo-session-2');
+
       // In demo mode, collect all records for this org
       const entries: AttendanceEntry[] = [];
       for (let i = 0; i < localStorage.length; i++) {

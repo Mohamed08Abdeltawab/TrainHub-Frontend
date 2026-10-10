@@ -67,6 +67,26 @@ const defaultSeedCourses: Course[] = [
     status: 'Active',
     createdAt: '2026-09-20T00:00:00Z',
   },
+  {
+    id: 'demo-course-js',
+    title: 'JavaScript Essentials & Deep Dive',
+    description: 'Core JavaScript fundamentals, asynchronous programming, closures, and DOM manipulation.',
+    category: 'Web Development',
+    level: 'Beginner',
+    durationHours: 35,
+    status: 'Active',
+    createdAt: '2026-09-10T00:00:00Z',
+  },
+  {
+    id: 'demo-course-frontend',
+    title: 'Frontend Foundations with React',
+    description: 'Building accessible, high-performance user interfaces with React and Tailwind CSS.',
+    category: 'Web Development',
+    level: 'Beginner',
+    durationHours: 30,
+    status: 'Active',
+    createdAt: '2026-09-15T00:00:00Z',
+  },
 ];
 
 function read(orgId: string): Course[] {

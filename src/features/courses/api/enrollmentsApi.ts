@@ -70,10 +70,28 @@ const storageKey = (orgId: string, courseId: string) => `trainhub.organization.$
 function getSeedEnrollments(courseId: string): Enrollment[] {
   if (courseId === 'demo-course-web') {
     return [
-      { studentId: 'user-student', status: 'Active', enrolledAt: new Date().toISOString() },
-      { studentId: 'student-2', status: 'Active', enrolledAt: new Date().toISOString() },
-      { studentId: 'student-3', status: 'Active', enrolledAt: new Date().toISOString() },
-      { studentId: 'student-4', status: 'Active', enrolledAt: new Date().toISOString() },
+      { studentId: 'user-student', status: 'Active', enrolledAt: '2026-09-01T00:00:00Z' },
+      { studentId: 'student-2', status: 'Active', enrolledAt: '2026-09-01T00:00:00Z' },
+      { studentId: 'student-3', status: 'Active', enrolledAt: '2026-09-02T00:00:00Z' },
+      { studentId: 'student-4', status: 'Active', enrolledAt: '2026-09-03T00:00:00Z' },
+    ];
+  }
+  if (courseId === 'demo-course-design') {
+    return [
+      { studentId: 'user-student', status: 'Active', enrolledAt: '2026-09-15T00:00:00Z' },
+      { studentId: 'student-5', status: 'Active', enrolledAt: '2026-09-15T00:00:00Z' },
+      { studentId: 'student-7', status: 'Active', enrolledAt: '2026-09-22T00:00:00Z' },
+    ];
+  }
+  if (courseId === 'demo-course-git') {
+    return [
+      { studentId: 'user-student', status: 'Active', enrolledAt: '2026-09-20T00:00:00Z' },
+      { studentId: 'student-6', status: 'Active', enrolledAt: '2026-09-20T00:00:00Z' },
+    ];
+  }
+  if (courseId === 'demo-course-js') {
+    return [
+      { studentId: 'student-8', status: 'Pending', enrolledAt: '2026-09-25T00:00:00Z' },
     ];
   }
   return [];

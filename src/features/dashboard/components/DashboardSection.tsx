@@ -5,6 +5,7 @@ import OrganizationProfile from './OrganizationProfile';
 import OrganizationOverview from './OrganizationOverview';
 import OrganizationSettings from './OrganizationSettings';
 import UserProfile from './UserProfile';
+import PlatformOrganizations from './PlatformOrganizations';
 import StudentsList from '@/features/students/components/StudentsList';
 import InstructorsList from '@/features/instructors/components/InstructorsList';
 import CoursesList from '@/features/courses/components/CoursesList';
@@ -17,6 +18,12 @@ import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
 import MyCourses from '@/features/courses/components/MyCourses';
 import ErrorState from '@/components/errors/ErrorState';
 import { useLanguage } from '@/i18n/LanguageContext';
+import AssignmentsList from '@/features/assignments/components/AssignmentsList';
+import CertificatesList from '@/features/certificates/components/CertificatesList';
+import ReportsView from '@/features/reports/components/ReportsView';
+import PlatformSubscriptionsView from '@/features/platform/components/PlatformSubscriptionsView';
+import PlatformUsersView from '@/features/platform/components/PlatformUsersView';
+import PlatformSettingsView from '@/features/platform/components/PlatformSettingsView';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -45,7 +52,11 @@ export default function DashboardSection() {
     return <UserProfile />;
   }
 
-  if (active === 'Learners' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR')) {
+  if (active === 'Organizations' && role === 'SUPER_ADMIN') {
+    return <PlatformOrganizations />;
+  }
+
+  if (active === 'Learners' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR' || role === 'SUPER_ADMIN')) {
     return <StudentsList />;
   }
 
@@ -53,15 +64,15 @@ export default function DashboardSection() {
     return <MyCourses />;
   }
 
-  if (active === 'Instructors' && role === 'ORG_ADMIN') {
+  if (active === 'Instructors' && (role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) {
     return <InstructorsList />;
   }
 
-  if (active === 'Courses' && role === 'ORG_ADMIN') {
+  if (active === 'Courses' && (role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) {
     return <CoursesList />;
   }
 
-  if ((active === 'Cohorts' && role === 'ORG_ADMIN') || (active === 'My cohorts' && role === 'INSTRUCTOR')) {
+  if ((active === 'Cohorts' && (role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) || (active === 'My cohorts' && role === 'INSTRUCTOR')) {
     return <GroupsList />;
   }
 
@@ -96,6 +107,30 @@ export default function DashboardSection() {
         onOpenPrimarySection={openPrimarySection}
       />
     );
+  }
+
+  if (active === 'Assignments') {
+    return <AssignmentsList />;
+  }
+
+  if (active === 'Certificates' && role === 'STUDENT') {
+    return <CertificatesList />;
+  }
+
+  if (active === 'Reports' && (role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) {
+    return <ReportsView />;
+  }
+
+  if (active === 'Subscriptions' && role === 'SUPER_ADMIN') {
+    return <PlatformSubscriptionsView />;
+  }
+
+  if (active === 'Platform users' && role === 'SUPER_ADMIN') {
+    return <PlatformUsersView />;
+  }
+
+  if (active === 'Settings' && role === 'SUPER_ADMIN') {
+    return <PlatformSettingsView />;
   }
 
   return (
