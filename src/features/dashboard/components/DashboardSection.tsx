@@ -3,6 +3,9 @@ import DashboardOverview from './DashboardOverview';
 import DashboardEmptySection from './DashboardEmptySection';
 import OrganizationProfile from './OrganizationProfile';
 import OrganizationOverview from './OrganizationOverview';
+import InstructorOverview from './InstructorOverview';
+import StudentOverview from './StudentOverview';
+import PlatformOverview from './PlatformOverview';
 import OrganizationSettings from './OrganizationSettings';
 import UserProfile from './UserProfile';
 import PlatformOrganizations from './PlatformOrganizations';
@@ -18,12 +21,7 @@ import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
 import MyCourses from '@/features/courses/components/MyCourses';
 import ErrorState from '@/components/errors/ErrorState';
 import { useLanguage } from '@/i18n/LanguageContext';
-import AssignmentsList from '@/features/assignments/components/AssignmentsList';
-import CertificatesList from '@/features/certificates/components/CertificatesList';
-import ReportsView from '@/features/reports/components/ReportsView';
-import PlatformSubscriptionsView from '@/features/platform/components/PlatformSubscriptionsView';
 import PlatformUsersView from '@/features/platform/components/PlatformUsersView';
-import PlatformSettingsView from '@/features/platform/components/PlatformSettingsView';
 
 /**
  * Route-aware section component rendered inside the DashboardLayout via <Outlet>.
@@ -101,6 +99,15 @@ export default function DashboardSection() {
     if (role === 'ORG_ADMIN') {
       return <OrganizationOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
     }
+    if (role === 'INSTRUCTOR') {
+      return <InstructorOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
+    }
+    if (role === 'STUDENT') {
+      return <StudentOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
+    }
+    if (role === 'SUPER_ADMIN') {
+      return <PlatformOverview content={dashboardQuery.data ?? content} onOpenPrimarySection={openPrimarySection} />;
+    }
     return (
       <DashboardOverview
         content={dashboardQuery.data ?? content}
@@ -109,28 +116,8 @@ export default function DashboardSection() {
     );
   }
 
-  if (active === 'Assignments') {
-    return <AssignmentsList />;
-  }
-
-  if (active === 'Certificates' && role === 'STUDENT') {
-    return <CertificatesList />;
-  }
-
-  if (active === 'Reports' && (role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) {
-    return <ReportsView />;
-  }
-
-  if (active === 'Subscriptions' && role === 'SUPER_ADMIN') {
-    return <PlatformSubscriptionsView />;
-  }
-
   if (active === 'Platform users' && role === 'SUPER_ADMIN') {
     return <PlatformUsersView />;
-  }
-
-  if (active === 'Settings' && role === 'SUPER_ADMIN') {
-    return <PlatformSettingsView />;
   }
 
   return (

@@ -14,7 +14,7 @@ export type DashboardOutletContext = {
   active: string;
   activeItem: NavItem | undefined;
   navigate: (label: string) => void;
-  openPrimarySection: () => void;
+  openPrimarySection: (targetLabel?: string) => void;
 };
 
 /** Convenience hook for child route components to consume the dashboard context. */

@@ -11,7 +11,7 @@ import OperationalStatistics from './OperationalStatistics';
 
 const metricIcons = [UsersRound, BookOpenCheck, ArrowUpRight, ClipboardCheck];
 
-export default function OrganizationOverview({ content, onOpenPrimarySection }: { content: DashboardContent; onOpenPrimarySection: () => void }) {
+export default function OrganizationOverview({ content, onOpenPrimarySection }: { content: DashboardContent; onOpenPrimarySection: (targetLabel?: string) => void }) {
   const { t } = useLanguage();
   const { orgId = 'demo' } = useParams();
   const { user } = useAuth();
@@ -124,15 +124,15 @@ export default function OrganizationOverview({ content, onOpenPrimarySection }: 
         <Card className="border-border bg-card/70 shadow-sm">
           <CardHeader className="px-5 pb-2 pt-5"><CardTitle className="text-sm">{t('Needs your attention')}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{t('Keep your academy operations moving.')}</p></CardHeader>
           <CardContent className="space-y-3 px-5 pb-5 pt-2">
-            <button onClick={onOpenPrimarySection} className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-start transition hover:bg-muted/50"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-500"><ClipboardCheck className="size-4" /></span><span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-foreground">{t('Assignments to review')}</span><span className="mt-0.5 block text-[11px] text-muted-foreground">{t('6 assignments need attention')}</span></span><ArrowUpRight className="size-4 text-muted-foreground" /></button>
-            <button onClick={onOpenPrimarySection} className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-start transition hover:bg-muted/50"><span className="grid size-9 place-items-center rounded-lg bg-sky-500/10 text-sky-500"><CalendarDays className="size-4" /></span><span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-foreground">{t('Upcoming cohort starts')}</span><span className="mt-0.5 block text-[11px] text-muted-foreground">{t('3 starting this week')}</span></span><ArrowUpRight className="size-4 text-muted-foreground" /></button>
-            <Button className="mt-1 w-full" variant="outline" onClick={onOpenPrimarySection}>{t('View courses and cohorts')}</Button>
+            <button onClick={() => onOpenPrimarySection('Cohorts')} className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-start transition hover:bg-muted/50"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-500"><ClipboardCheck className="size-4" /></span><span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-foreground">{t('Active cohorts')}</span><span className="mt-0.5 block text-[11px] text-muted-foreground">{t('Monitor running batches')}</span></span><ArrowUpRight className="size-4 text-muted-foreground" /></button>
+            <button onClick={() => onOpenPrimarySection('Sessions')} className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-start transition hover:bg-muted/50"><span className="grid size-9 place-items-center rounded-lg bg-sky-500/10 text-sky-500"><CalendarDays className="size-4" /></span><span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-foreground">{t('Upcoming sessions')}</span><span className="mt-0.5 block text-[11px] text-muted-foreground">{t('Scheduled classes')}</span></span><ArrowUpRight className="size-4 text-muted-foreground" /></button>
+            <Button className="mt-1 w-full" variant="outline" onClick={() => onOpenPrimarySection('Courses')}>{t('View courses and cohorts')}</Button>
           </CardContent>
         </Card>
       </div>
 
       <Card className="border-border bg-card/70 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between px-5 pb-2 pt-5"><div><CardTitle className="text-sm">{t(content.tableTitle)}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{t(content.subtitle)}</p></div><Button variant="ghost" size="sm" onClick={onOpenPrimarySection}>{t('View all')} <ArrowUpRight className="size-3.5" /></Button></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between px-5 pb-2 pt-5"><div><CardTitle className="text-sm">{t(content.tableTitle)}</CardTitle><p className="mt-1 text-xs text-muted-foreground">{t(content.subtitle)}</p></div><Button variant="ghost" size="sm" onClick={() => onOpenPrimarySection()}>{t('View all')} <ArrowUpRight className="size-3.5" /></Button></CardHeader>
         <CardContent className="space-y-1 px-5 pb-5">
           {content.rows.map((row) => <div key={row.title} className="flex flex-wrap items-center justify-between gap-3 border-t border-border py-3"><div className="min-w-0"><p className="truncate text-xs font-semibold text-foreground">{t(row.title)}</p><p className="mt-1 truncate text-[11px] text-muted-foreground">{t(row.detail)}</p></div><Badge variant={/upcoming|review/i.test(row.status) ? 'warning' : 'success'}>{t(row.status)}</Badge></div>)}
         </CardContent>

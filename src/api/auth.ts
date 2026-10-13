@@ -5,7 +5,6 @@ import type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
-  ForgotPasswordRequest,
 } from './types';
 import { demoUsers } from '@/config/demoUsers';
 import type { DashboardRole } from '@/types/nav';
@@ -22,6 +21,7 @@ function mapRole(backendRoles?: string[]): DashboardRole {
 interface BackendAuthResponse {
   accessToken?: string;
   token?: string;
+  refreshToken?: string;
   roles?: string[];
   userId?: string;
   email?: string;
@@ -69,6 +69,10 @@ export const authApi = {
     const { data } = await apiClient.post<BackendAuthResponse>('/auth/login', payload);
 
     const token = data.accessToken || data.token || '';
+    const refreshToken = data.refreshToken;
+    if (refreshToken) {
+      try { localStorage.setItem('refreshToken', refreshToken); } catch { /* ignore */ }
+    }
     const roles = data.roles || (data.user?.role ? [data.user.role] : []);
     const role: DashboardRole = data.user?.role || mapRole(roles);
     const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
@@ -78,6 +82,7 @@ export const authApi = {
 
     return {
       token,
+      refreshToken,
       user: {
         id: data.userId || data.user?.id || '',
         name,
@@ -163,16 +168,20 @@ export const authApi = {
     }
   },
 
-  async forgotPassword(payload: ForgotPasswordRequest): Promise<{ message: string }> {
-    const { data } = await apiClient.post<{ message: string }>('/auth/forgot-password', payload);
-    return data;
-  },
-
   async logout(): Promise<void> {
+    let refreshToken: string | null = null;
     try {
-      await apiClient.post('/auth/logout', {});
+      refreshToken = localStorage.getItem('refreshToken');
+    } catch { /* ignore */ }
+
+    try {
+      await apiClient.post('/auth/logout', { refreshToken });
     } catch {
       // Allow logout to proceed locally even if server revocation is unavailable
+    } finally {
+      try {
+        localStorage.removeItem('refreshToken');
+      } catch { /* ignore */ }
     }
   },
 };

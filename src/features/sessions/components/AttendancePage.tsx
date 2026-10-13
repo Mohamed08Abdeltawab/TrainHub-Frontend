@@ -96,40 +96,34 @@ export default function AttendancePage() {
           // Find records for demo student
           const filtered = allRecords.filter(
             (r) =>
-              r.studentId === 'user-student' ||
-              (r.studentName && r.studentName.toLowerCase().includes('david kim'))
+              r.studentId === (user?.id || 'user-student') ||
+              (user?.email && r.studentEmail?.toLowerCase() === user.email.toLowerCase()) ||
+              (user?.name && r.studentName && r.studentName.toLowerCase().includes(user.name.toLowerCase()))
           );
           setStudentRecords(filtered.length ? filtered : allRecords);
 
-          const pct = await attendanceApi.getPercentage('user-student', undefined, true, orgId);
+          const pct = await attendanceApi.getPercentage(user?.id || 'user-student', undefined, true, orgId);
           setStudentPercentage(pct);
         } else {
           // Real student mode: fetch student-scoped attendance directly
-          try {
-            const records = await attendanceApi.listAll(orgId, false);
-            setStudentRecords(records);
+          const [records, allSessions, nextGroups, me] = await Promise.all([
+            attendanceApi.listAll(orgId, false),
+            studentsApi.getMySessions().catch(() => sessionsApi.list(orgId, false).catch(() => [])),
+            studentsApi.getMyCohorts().catch(() => groupsApi.list(orgId, false).catch(() => [])),
+            studentsApi.getMe().catch(() => null),
+          ]);
+          setSessions(allSessions);
+          setGroups(nextGroups);
+          setStudentRecords(records);
 
-            const studentId = records[0]?.studentId;
-            if (studentId) {
-              try {
-                const pct = await attendanceApi.getPercentage(studentId, undefined, false, orgId);
-                setStudentPercentage(pct);
-              } catch {
-                // percentage calculation fallback below
-              }
+          const studentId = me?.id || records[0]?.studentId || user?.id;
+          if (studentId) {
+            try {
+              const pct = await attendanceApi.getPercentage(studentId, undefined, false, orgId);
+              setStudentPercentage(pct);
+            } catch {
+              // percentage calculation fallback
             }
-          } catch {
-            // If backend is unreachable, fallback to demo student attendance
-            const [allRecords, allSessions, nextGroups] = await Promise.all([
-              attendanceApi.listAll(orgId, true),
-              sessionsApi.list(orgId, true),
-              groupsApi.list(orgId, true),
-            ]);
-            setSessions(allSessions);
-            setGroups(nextGroups);
-            setStudentRecords(allRecords);
-            const pct = await attendanceApi.getPercentage('user-student', undefined, true, orgId).catch(() => null);
-            setStudentPercentage(pct);
           }
         }
       } else {

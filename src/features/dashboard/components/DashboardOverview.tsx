@@ -18,7 +18,7 @@ type DashboardRow = { title: string; detail: string; status: string };
 
 type DashboardOverviewProps = {
   content: DashboardContent;
-  onOpenPrimarySection: () => void;
+  onOpenPrimarySection: (targetLabel?: string) => void;
 };
 
 export default function DashboardOverview({
@@ -114,7 +114,7 @@ export default function DashboardOverview({
                 {t(content.subtitle)}
               </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={onOpenPrimarySection}>
+            <Button variant="ghost" size="sm" onClick={() => onOpenPrimarySection(content.action)}>
               {t('View all')} <ArrowRight className="size-3.5 rtl:rotate-180" />
             </Button>
           </CardHeader>

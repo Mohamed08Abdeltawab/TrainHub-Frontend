@@ -12,6 +12,7 @@ export type AttendanceEntry = {
   room?: string;
   studentId: string;
   studentName?: string;
+  studentEmail?: string;
   studentCode?: string;
   status: AttendanceStatus;
   markedAt: string;

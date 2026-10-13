@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { DashboardRole, NavItem } from '../../types/nav';
 import HeaderSearch from './HeaderSearch';
-import NotificationMenu from './NotificationMenu';
 import OrgBadge from './OrgBadge';
 import UserNav from './UserNav';
 import { Button, Separator } from '@/components/ui';
@@ -10,7 +9,7 @@ import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../i18n/LanguageContext';
 import ThemeToggle from './ThemeToggle';
 
-type OpenMenu = 'role' | 'profile' | 'notifications' | null;
+type OpenMenu = 'role' | 'profile' | null;
 
 type Props = {
   role: DashboardRole;
@@ -37,10 +36,6 @@ export default function AppHeader({
 }: Props) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const { t, direction } = useLanguage();
-
-  const toggleMenu = useCallback((menu: Exclude<OpenMenu, null>) => {
-    setOpenMenu((current) => (current === menu ? null : menu));
-  }, []);
 
   const chooseRole = useCallback(
     (nextRole: DashboardRole) => {
@@ -99,13 +94,6 @@ export default function AppHeader({
         <ThemeToggle />
         <LanguageToggle />
         <HeaderSearch items={items} onNavigate={openSection} />
-
-        <NotificationMenu
-          open={openMenu === 'notifications'}
-          onToggle={() => toggleMenu('notifications')}
-          items={items}
-          onNavigate={openSection}
-        />
 
         <UserNav
           role={role}

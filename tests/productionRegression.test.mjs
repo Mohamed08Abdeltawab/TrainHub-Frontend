@@ -56,11 +56,11 @@ describe('Production Readiness & Complete User Flows Regression Suite', () => {
       const superAdminLabels = roleNavigation.SUPER_ADMIN.map((i) => i.label);
       assert.ok(superAdminLabels.includes('Overview'));
       assert.ok(superAdminLabels.includes('Organizations'));
-      assert.ok(superAdminLabels.includes('Subscriptions'));
       assert.ok(superAdminLabels.includes('Platform users'));
-      assert.ok(superAdminLabels.includes('Reports'));
-      assert.ok(superAdminLabels.includes('Settings'));
       assert.ok(superAdminLabels.includes('User profile'));
+      assert.ok(!superAdminLabels.includes('Subscriptions'), 'Subscriptions must be stripped (out-of-scope)');
+      assert.ok(!superAdminLabels.includes('Reports'), 'Reports must be stripped (out-of-scope)');
+      assert.ok(!superAdminLabels.includes('Settings'), 'Settings must be stripped (out-of-scope)');
     });
 
     it('should configure demo users with correct paths and avatar tokens', async () => {
@@ -154,16 +154,9 @@ describe('Production Readiness & Complete User Flows Regression Suite', () => {
       );
     });
 
-    it('NotificationMenu should pass localized strings for notification items', () => {
-      const notifContent = fs.readFileSync(path.join(rootDir, 'components/layout/NotificationMenu.tsx'), 'utf-8');
-      assert.ok(
-        notifContent.includes('{t(notice.title)}'),
-        'NotificationMenu must localize notification title'
-      );
-      assert.ok(
-        notifContent.includes('{t(notice.detail)}'),
-        'NotificationMenu must localize notification detail'
-      );
+    it('Out-of-scope notifications component should not be present in header layout', () => {
+      const headerContent = fs.readFileSync(path.join(rootDir, 'components/layout/AppHeader.tsx'), 'utf-8');
+      assert.ok(!headerContent.includes('NotificationMenu'), 'NotificationMenu must not be mounted in AppHeader');
     });
   });
 

@@ -54,7 +54,7 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
         variant="ghost"
         size="icon"
         onClick={() => setOpen(true)}
-        aria-label={t('Search sections...')}
+        aria-label={t('Quick Navigation')}
         className="size-9 text-muted-foreground hover:text-foreground md:hidden"
       >
         <Search className="size-4" aria-hidden="true" />
@@ -68,7 +68,7 @@ export default function HeaderSearch({ items, onNavigate }: Props) {
         className="group hidden h-9 items-center gap-2 rounded-lg border border-border bg-card/60 px-3 text-xs text-muted-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:flex"
       >
         <Search className="size-3.5 transition-colors group-hover:text-primary" aria-hidden="true" />
-        <span className="font-normal">{t('Search sections...')}</span>
+        <span className="font-normal">{t('Quick Navigation')}</span>
         <kbd className="pointer-events-none ms-2 inline-flex h-5 select-none items-center gap-0.5 rounded border border-border bg-muted/70 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           {isMac ? '⌘' : 'Ctrl'} K
         </kbd>

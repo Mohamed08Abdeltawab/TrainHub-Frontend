@@ -2,7 +2,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/',
   REGISTER: '/register',
-  FORGOT_PASSWORD: '/forgot-password',
+  SUPER_ADMIN_DASHBOARD: '/platform',
   ADMIN_DASHBOARD: '/admin/organizations/:orgId',
   INSTRUCTOR_DASHBOARD: '/instructor',
   STUDENT_DASHBOARD: '/student',

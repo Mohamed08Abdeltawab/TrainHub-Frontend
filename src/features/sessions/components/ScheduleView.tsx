@@ -21,7 +21,6 @@ import { getErrorPresentation } from '@/utils/errorPresentation';
 import { groupsApi, type CourseGroup } from '@/features/courses/api/groupsApi';
 import { instructorsApi } from '@/features/instructors/api/instructorsApi';
 import { studentsApi } from '@/features/students/api/studentsApi';
-import { enrollmentsApi } from '@/features/courses/api/enrollmentsApi';
 import { sessionsApi, type TrainingSession } from '../api/sessionsApi';
 
 export default function ScheduleView({
@@ -55,27 +54,34 @@ export default function ScheduleView({
       let nextSessions: TrainingSession[] = [];
       let nextGroups: CourseGroup[] = [];
 
-      try {
-        [nextSessions, nextGroups] = await Promise.all([
-          sessionsApi.list(orgId, demo),
-          groupsApi.list(orgId, demo),
-        ]);
-      } catch (reason) {
-        if (studentOnly) {
-          // If staff session endpoint is forbidden for student, fallback to mock/seed sessions
+      if (studentOnly) {
+        if (demo) {
           [nextSessions, nextGroups] = await Promise.all([
             sessionsApi.list(orgId, true),
             groupsApi.list(orgId, true),
           ]);
+          setAllowedGroupIds(['demo-cohort-a']);
         } else {
-          throw reason;
+          try {
+            [nextSessions, nextGroups] = await Promise.all([
+              studentsApi.getMySessions(),
+              studentsApi.getMyCohorts(),
+            ]);
+            setAllowedGroupIds(nextGroups.map((g) => g.id));
+          } catch {
+            [nextSessions, nextGroups] = await Promise.all([
+              sessionsApi.list(orgId, false),
+              groupsApi.list(orgId, false),
+            ]);
+            setAllowedGroupIds(nextGroups.map((g) => g.id));
+          }
         }
-      }
+      } else if (instructorOnly && user?.email) {
+        [nextSessions, nextGroups] = await Promise.all([
+          sessionsApi.list(orgId, demo),
+          groupsApi.list(orgId, demo),
+        ]);
 
-      setSessions(nextSessions);
-      setGroups(nextGroups);
-
-      if (instructorOnly && user?.email) {
         if (demo) {
           const instructors = await instructorsApi.list(orgId, true);
           const self = instructors.find((item) => item.email.toLowerCase() === user.email?.toLowerCase());
@@ -85,54 +91,19 @@ export default function ScheduleView({
             const me = await instructorsApi.getMe();
             setAllowedGroupIds(me ? nextGroups.filter((group) => group.instructorIds?.includes(me.id)).map((group) => group.id) : []);
           } catch {
-            const instructors = await instructorsApi.list(orgId, false);
-            const self = instructors.find((item) => item.email.toLowerCase() === user.email?.toLowerCase());
-            setAllowedGroupIds(self ? nextGroups.filter((group) => group.instructorIds?.includes(self.id)).map((group) => group.id) : []);
+            setAllowedGroupIds(nextGroups.map((group) => group.id));
           }
-        }
-      } else if (studentOnly && user?.email) {
-        let learnerId = user.id || 'user-student';
-        let enrolled: string[] = [];
-
-        try {
-          const students = await studentsApi.list(orgId, demo).catch(() => studentsApi.list(orgId, true));
-          const learner = students.find(
-            (student) => student.email.toLowerCase() === user.email!.toLowerCase()
-          );
-          if (learner) {
-            learnerId = learner.id;
-          }
-        } catch { /* student list fallback */ }
-
-        try {
-          const enrollments = await Promise.all(
-            nextGroups.map((group) =>
-              enrollmentsApi.list(orgId, group.courseId, demo).catch(() =>
-                enrollmentsApi.list(orgId, group.courseId, true).catch(() => [])
-              )
-            )
-          );
-          enrolled = nextGroups
-            .filter((_, idx) =>
-              enrollments[idx]?.some(
-                (item) => (item.studentId === learnerId || (item as { studentEmail?: string }).studentEmail?.toLowerCase() === user.email!.toLowerCase()) && item.status === 'Active'
-              )
-            )
-            .map((g) => g.id);
-        } catch { /* enrollment list fallback */ }
-
-        if (enrolled.length > 0) {
-          setAllowedGroupIds(enrolled);
-        } else if (demo || user.email.toLowerCase().includes('david.kim')) {
-          setAllowedGroupIds(['demo-cohort-a']);
-        } else if (nextGroups.length > 0) {
-          setAllowedGroupIds([nextGroups[0].id]);
-        } else {
-          setAllowedGroupIds([]);
         }
       } else {
+        [nextSessions, nextGroups] = await Promise.all([
+          sessionsApi.list(orgId, demo),
+          groupsApi.list(orgId, demo),
+        ]);
         setAllowedGroupIds(null);
       }
+
+      setSessions(nextSessions);
+      setGroups(nextGroups);
     } catch (reason) {
       setError(t(getErrorPresentation(reason).description));
     } finally {

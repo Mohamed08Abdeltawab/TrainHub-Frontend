@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Users, ShieldCheck, Mail, Key, UserCheck, Shield } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 

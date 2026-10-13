@@ -71,7 +71,7 @@ const statusMap: Record<CourseGroupStatus, number> = {
   Cancelled: 3,
 };
 
-function mapCourseGroup(dto: BackendCourseGroupDto): CourseGroup {
+export function mapCourseGroup(dto: BackendCourseGroupDto): CourseGroup {
   let status: CourseGroupStatus = 'Active';
   if (dto.status === 0 || dto.statusName === 'Draft') status = 'Planned';
   else if (dto.status === 2 || dto.statusName === 'Completed') status = 'Completed';
