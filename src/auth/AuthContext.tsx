@@ -1,8 +1,9 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import axios from 'axios';
 import type { DashboardRole } from '../types/nav';
 import { demoUsers } from '../config/demoUsers';
 import { authApi } from '../api/auth';
+import apiClient from '../api/apiClient';
 
 const SESSION_KEY = 'trainhub.session';
 
@@ -25,7 +26,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<DashboardRole | 'invalid' | 'unavailable'>;
   enterDemo: (role: DashboardRole) => void;
   signOut: () => void;
-  updateProfile: (updates: Pick<AuthUser, 'name' | 'email' | 'jobTitle' | 'phone' | 'timezone' | 'bio'>) => boolean;
+  updateProfile: (updates: Pick<AuthUser, 'name' | 'email' | 'jobTitle' | 'phone' | 'timezone' | 'bio'>) => Promise<boolean> | boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -42,15 +43,58 @@ function readSession(): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(readSession);
 
-  const saveSession = (nextUser: AuthUser | null, token?: string) => {
+  // Validate session on mount against /currentuser
+  useEffect(() => {
+    let isMounted = true;
+    async function validateBoot() {
+      const token = localStorage.getItem('token');
+      const session = readSession();
+      if (session && !session.demo && token) {
+        try {
+          const { data } = await apiClient.get<{
+            id: string;
+            email: string;
+            firstName?: string;
+            lastName?: string;
+            organizationName?: string;
+            organizationId?: string;
+          }>('/currentuser');
+          if (isMounted && data) {
+            setUser((prev) => (prev ? {
+              ...prev,
+              id: data.id || prev.id,
+              name: [data.firstName, data.lastName].filter(Boolean).join(' ') || prev.name,
+              email: data.email || prev.email,
+              organization: data.organizationName || prev.organization,
+              organizationId: data.organizationId || prev.organizationId,
+            } : null));
+          }
+        } catch {
+          // If token verification completely failed and storage cleared
+          if (isMounted && !localStorage.getItem('token')) {
+            setUser(null);
+          }
+        }
+      }
+    }
+    void validateBoot();
+    return () => { isMounted = false; };
+  }, []);
+
+  const saveSession = (nextUser: AuthUser | null, token?: string, refreshToken?: string) => {
     try {
       if (nextUser) {
         localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
         if (token) localStorage.setItem('token', token);
-        else if (nextUser.demo) localStorage.removeItem('token');
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+        else if (nextUser.demo) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+        }
       } else {
         localStorage.removeItem(SESSION_KEY);
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
       }
       setUser(nextUser);
       return true;
@@ -58,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.removeItem(SESSION_KEY);
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
       } catch { /* Keep the in-memory state signed out when storage is unavailable. */ }
       setUser(null);
       return false;
@@ -68,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     async signIn(email, password) {
       const trimmedEmail = email.trim();
-      const normalizedEmail = trimmedEmail.toLowerCase();
       try {
         const response = await authApi.login({ email: trimmedEmail, password });
         const validRoles: DashboardRole[] = ['SUPER_ADMIN', 'ORG_ADMIN', 'INSTRUCTOR', 'STUDENT'];
@@ -80,51 +124,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           organization: response.user.organization,
           organizationId: response.user.organizationId,
           role: response.user.role,
-        }, response.token) ? response.user.role : 'unavailable';
+        }, response.token, response.refreshToken) ? response.user.role : 'unavailable';
       } catch (error) {
-        // Check if user matches a locally registered account
-        try {
-          const rawRegistered = localStorage.getItem('trainhub.registered_users');
-          if (rawRegistered) {
-            const list = JSON.parse(rawRegistered);
-            if (Array.isArray(list)) {
-              const matchedLocal = list.find((item) => typeof item?.email === 'string' && item.email.toLowerCase() === normalizedEmail);
-              if (matchedLocal) {
-                if (matchedLocal.password === password) {
-                  const role: DashboardRole = matchedLocal.role || 'ORG_ADMIN';
-                  return saveSession({
-                    id: matchedLocal.id || 'local-user',
-                    name: matchedLocal.name || 'Organization Owner',
-                    email: matchedLocal.email,
-                    organization: matchedLocal.organization || 'My Training Center',
-                    organizationId: matchedLocal.organizationId || 'local-org',
-                    role,
-                  }, 'mock-local-token-' + Date.now()) ? role : 'unavailable';
-                }
-                return 'invalid';
-              }
-            }
-          }
-        } catch { /* storage fallback */ }
-
-        // Check if credentials match a built-in MVP demo user
-        const matchedDemo = Object.values(demoUsers).find(
-          (item) => item.email.toLowerCase() === normalizedEmail
-        );
-        if (matchedDemo) {
-          if (password.length >= 6) {
-            return saveSession({
-              id: matchedDemo.id,
-              name: matchedDemo.name,
-              email: matchedDemo.email,
-              role: matchedDemo.role,
-              organization: 'Al-Amal Training Center',
-              demo: true,
-            }) ? matchedDemo.role : 'unavailable';
-          }
-          return 'invalid';
-        }
-
         // Authentication failures from backend are expected input errors
         if (axios.isAxiosError(error) && [400, 401, 403, 422].includes(error.response?.status ?? 0)) return 'invalid';
         return 'unavailable';
@@ -138,14 +139,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user && !user.demo) void authApi.logout().catch(() => undefined);
       saveSession(null);
     },
-    updateProfile(updates) {
+    async updateProfile(updates) {
       if (!user) return false;
       const nextUser = { ...user, ...updates };
       try {
+        if (!user.demo) {
+          const parts = updates.name ? updates.name.trim().split(/\s+/) : [];
+          const firstName = parts[0] || user.name.split(/\s+/)[0];
+          const lastName = parts.slice(1).join(' ') || '';
+          await apiClient.put('/currentuser', {
+            firstName,
+            lastName,
+            phoneNumber: updates.phone ?? user.phone,
+          });
+        }
         localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
         setUser(nextUser);
         return true;
-      } catch { return false; }
+      } catch {
+        return false;
+      }
     },
   }), [user]);
 

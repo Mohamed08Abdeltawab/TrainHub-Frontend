@@ -1,4 +1,6 @@
 import apiClient from '@/api/apiClient';
+import { mapCourseGroup, type CourseGroup, type BackendCourseGroupDto } from '@/features/courses/api/groupsApi';
+import { mapSession, type TrainingSession, type BackendSessionDto } from '@/features/sessions/api/sessionsApi';
 
 export type StudentStatus = 'Active' | 'Pending' | 'Inactive';
 export type Student = {
@@ -255,5 +257,21 @@ export const studentsApi = {
     }
     const students = readDemoStudents(orgId);
     writeDemoStudents(orgId, students.filter((student) => student.id !== id));
+  },
+  async getMe(): Promise<Student | null> {
+    try {
+      const { data } = await apiClient.get<BackendStudentDto>('/students/me');
+      return mapStudent(data);
+    } catch {
+      return null;
+    }
+  },
+  async getMyCohorts(): Promise<CourseGroup[]> {
+    const { data } = await apiClient.get<BackendCourseGroupDto[]>('/students/me/cohorts');
+    return (data || []).map(mapCourseGroup);
+  },
+  async getMySessions(): Promise<TrainingSession[]> {
+    const { data } = await apiClient.get<BackendSessionDto[]>('/students/me/sessions');
+    return (data || []).map(mapSession);
   },
 };

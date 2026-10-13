@@ -80,9 +80,47 @@ export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePa
     }
   };
 
-  const openPrimarySection = () => {
+  const openPrimarySection = (targetLabel?: string) => {
+    if (targetLabel) {
+      const match = navigation.find(
+        (entry) =>
+          toViewKey(entry.label) === toViewKey(targetLabel) ||
+          entry.label.toLowerCase() === targetLabel.toLowerCase()
+      );
+      if (match) {
+        navigate(match.label);
+        return;
+      }
+    }
+
+    if (role === 'SUPER_ADMIN') {
+      const item = navigation.find((entry) => entry.label === 'Organizations');
+      if (item) {
+        navigate(item.label);
+        return;
+      }
+    } else if (role === 'ORG_ADMIN') {
+      const item = navigation.find((entry) => entry.label === 'Courses');
+      if (item) {
+        navigate(item.label);
+        return;
+      }
+    } else if (role === 'INSTRUCTOR') {
+      const item = navigation.find((entry) => entry.label === 'Sessions' || entry.label === 'My courses');
+      if (item) {
+        navigate(item.label);
+        return;
+      }
+    } else if (role === 'STUDENT') {
+      const item = navigation.find((entry) => entry.label === 'My courses');
+      if (item) {
+        navigate(item.label);
+        return;
+      }
+    }
+
     const item =
-      navigation.find((entry) => /courses|organizations/i.test(entry.label)) ??
+      navigation.find((entry) => /courses|organizations|sessions/i.test(entry.label)) ??
       navigation[0];
     if (item) navigate(item.label);
   };

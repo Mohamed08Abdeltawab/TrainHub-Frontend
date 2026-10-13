@@ -13,6 +13,7 @@ export type LoginRequest = {
 
 export type LoginResponse = {
   token: string;
+  refreshToken?: string;
   user: {
     id: string;
     name: string;
@@ -33,9 +34,5 @@ export type RegisterRequest = {
 export type RegisterResponse = {
   id: string;
   name: string;
-  email: string;
-};
-
-export type ForgotPasswordRequest = {
   email: string;
 };

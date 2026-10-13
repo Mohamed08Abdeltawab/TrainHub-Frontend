@@ -12,6 +12,15 @@ export function translateText(
   dictionaries: TranslationDictionaries,
   variables?: TranslationVariables
 ): string {
+  if (
+    typeof import.meta !== 'undefined' &&
+    import.meta.env?.DEV &&
+    !Object.hasOwn(dictionaries[language], key) &&
+    !Object.hasOwn(dictionaries.en, key)
+  ) {
+    console.warn(`[i18n] Missing translation key: "${key}" for language "${language}"`);
+  }
+
   const translated = dictionaries[language][key] ?? dictionaries.en[key] ?? key;
   if (!variables) return translated;
 

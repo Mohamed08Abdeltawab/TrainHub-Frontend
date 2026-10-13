@@ -19,7 +19,7 @@ type DashboardShellProps = {
   onCloseMobileNav: () => void;
   onNavigate: (label: string) => void;
   onSelectRole: (role: DashboardRole) => void;
-  onPrimaryAction: () => void;
+  onPrimaryAction: (targetLabel?: string) => void;
   children: ReactNode;
 };
 
@@ -101,7 +101,7 @@ export default function DashboardShell({
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={onPrimaryAction}
+                  onClick={() => onPrimaryAction(content.action)}
                   className="w-full sm:w-auto"
                   leadingIcon={<Plus className="size-4" />}
                 >

@@ -17,11 +17,12 @@ export default function UserProfile() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaved(false);
-    const success = updateProfile({ name: name.trim(), email: email.trim(), jobTitle: jobTitle.trim(), phone: phone.trim(), timezone, bio: bio.trim() });
-    setSaved(success);
+    setError(false);
+    const success = await updateProfile({ name: name.trim(), email: email.trim(), jobTitle: jobTitle.trim(), phone: phone.trim(), timezone, bio: bio.trim() });
+    setSaved(Boolean(success));
     setError(!success);
   };
 

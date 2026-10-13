@@ -11,10 +11,7 @@ export const roleNavigation: Record<DashboardRole, NavItem[]> = {
   SUPER_ADMIN: [
     { label: 'Overview', icon: 'overview', group: 'Workspace' },
     { label: 'Organizations', icon: 'organization', group: 'Platform' },
-    { label: 'Subscriptions', icon: 'reports', group: 'Platform' },
     { label: 'Platform users', icon: 'learners', group: 'Platform' },
-    { label: 'Reports', icon: 'reports', group: 'Platform' },
-    { label: 'Settings', icon: 'settings', group: 'Platform' },
     { label: 'User profile', icon: 'learners', group: 'Account' },
   ],
   ORG_ADMIN: [
@@ -24,10 +21,8 @@ export const roleNavigation: Record<DashboardRole, NavItem[]> = {
     { label: 'Sessions', icon: 'calendar', group: 'Training' },
     { label: 'Attendance', icon: 'calendar', group: 'Training' },
     { label: 'Schedule', icon: 'calendar', group: 'Training' },
-    { label: 'Assignments', icon: 'assignments', group: 'Training' },
     { label: 'Learners', icon: 'learners', group: 'People' },
     { label: 'Instructors', icon: 'learners', group: 'People' },
-    { label: 'Reports', icon: 'reports', group: 'Organization' },
     { label: 'Organization profile', icon: 'organization', group: 'Organization' },
     { label: 'Organization settings', icon: 'settings', group: 'Organization' },
     { label: 'User profile', icon: 'learners', group: 'Account' },
@@ -38,7 +33,6 @@ export const roleNavigation: Record<DashboardRole, NavItem[]> = {
     { label: 'My cohorts', icon: 'calendar', group: 'Teaching' },
     { label: 'Sessions', icon: 'calendar', group: 'Teaching' },
     { label: 'Attendance', icon: 'calendar', group: 'Teaching' },
-    { label: 'Assignments', icon: 'assignments', group: 'Teaching' },
     { label: 'Schedule', icon: 'calendar', group: 'Teaching' },
     { label: 'Learners', icon: 'learners', group: 'People' },
     { label: 'User profile', icon: 'learners', group: 'Account' },
@@ -48,8 +42,6 @@ export const roleNavigation: Record<DashboardRole, NavItem[]> = {
     { label: 'My courses', icon: 'courses', group: 'Learning' },
     { label: 'My schedule', icon: 'calendar', group: 'Learning' },
     { label: 'Attendance', icon: 'calendar', group: 'Learning' },
-    { label: 'Assignments', icon: 'assignments', group: 'Learning' },
-    { label: 'Certificates', icon: 'reports', group: 'Learning' },
     { label: 'User profile', icon: 'learners', group: 'Account' },
   ],
 };
