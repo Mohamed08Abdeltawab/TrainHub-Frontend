@@ -67,8 +67,10 @@ export default function OrganizationProfile({ defaultName }: { defaultName: stri
             /* ignore */
           }
         })
-        .catch(() => {
-          // Keep existing profile from storage or fallback if API is unreachable
+        .catch((err) => {
+          if (!isMounted) return;
+          const presentation = getErrorPresentation(err);
+          setErrorMessage(presentation.description);
         });
     }
 

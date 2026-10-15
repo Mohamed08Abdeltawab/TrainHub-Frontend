@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ShieldCheck, RefreshCw } from 'lucide-react';
+import { ShieldCheck, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import apiClient from '@/api/apiClient';
@@ -57,16 +57,18 @@ export default function PlatformUsersView() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<PlatformUser[]>(defaultPlatformUsers);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const response = await apiClient.get<PlatformUser[]>('/roles/users');
       if (response.data && response.data.length > 0) {
         setUsers(response.data);
       }
     } catch {
-      // Fallback to default operations team if unauthenticated or network drop
+      setErrorMessage(t('Unable to load live platform operations users. Displaying offline directory.'));
     } finally {
       setLoading(false);
     }
@@ -96,6 +98,26 @@ export default function PlatformUsersView() {
           {t('Refresh')}
         </Button>
       </header>
+
+      {errorMessage && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>{errorMessage}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-amber-700 hover:bg-amber-500/20 dark:text-amber-300"
+            onClick={() => void fetchUsers()}
+          >
+            {t('Retry')}
+          </Button>
+        </div>
+      )}
 
       <Card className="border-border bg-card/70">
         <CardHeader className="p-5 pb-3">
