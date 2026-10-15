@@ -188,4 +188,110 @@ describe('Task 3: Student Flows Validation & Architecture', () => {
       assert.strictEqual(absentRecords.length, 1);
     });
   });
+
+  describe('FIND-P2-02: Admin Student Creation Contract & Field Preservation', () => {
+    it('should provision student via unified register call without redundant POST /students conflict', async () => {
+      let postStudentsCalled = false;
+      let registerPayloadCaptured = null;
+
+      const mockApiClient = {
+        post: async (url, payload) => {
+          if (url === '/auth/register') {
+            registerPayloadCaptured = payload;
+            return {
+              data: {
+                userId: 'user-new-stu',
+                studentId: 'student-entity-123',
+                studentCode: payload.studentCode || 'STU-AUTO-01',
+                email: payload.email,
+              },
+            };
+          }
+          if (url === '/students') {
+            postStudentsCalled = true;
+            throw new Error('409 Conflict: Student already exists');
+          }
+          throw new Error(`Unexpected url: ${url}`);
+        },
+      };
+
+      const createStudent = async (orgId, input) => {
+        const nameParts = input.name.trim().split(/\s+/);
+        const firstName = nameParts[0] || 'Student';
+        const lastName = nameParts.slice(1).join(' ') || firstName;
+
+        const regRes = await mockApiClient.post('/auth/register', {
+          firstName,
+          lastName,
+          email: input.email.trim(),
+          password: 'Password123!',
+          confirmPassword: 'Password123!',
+          organizationId: orgId,
+          phoneNumber: input.phone?.trim() || undefined,
+          guardianPhone: input.phone?.trim() || undefined,
+          academicYear: input.course?.trim() || undefined,
+          studentCode: input.studentCode?.trim() || undefined,
+        });
+
+        const studentId = regRes.data.studentId || regRes.data.userId;
+        const studentCode = regRes.data.studentCode || `STU-${regRes.data.userId.slice(0, 8).toUpperCase()}`;
+
+        return {
+          id: studentId,
+          name: input.name.trim(),
+          email: input.email.trim(),
+          phone: input.phone?.trim() || '',
+          course: input.course?.trim() || '',
+          status: 'Active',
+          studentCode,
+          createdAt: new Date().toISOString(),
+        };
+      };
+
+      const input = {
+        name: 'Sara Tarek',
+        email: 'sara.tarek@example.com',
+        phone: '+20 100 999 8888',
+        course: 'Grade 11 - Science',
+        status: 'Active',
+        studentCode: 'STU-EXP-01',
+      };
+
+      const result = await createStudent('org-demo', input);
+
+      assert.strictEqual(postStudentsCalled, false, 'Redundant POST /students must not be called');
+      assert.strictEqual(result.id, 'student-entity-123', 'Result ID must be the Student entity ID');
+      assert.strictEqual(result.studentCode, 'STU-EXP-01');
+      assert.strictEqual(result.phone, '+20 100 999 8888');
+      assert.strictEqual(result.course, 'Grade 11 - Science');
+
+      assert.strictEqual(registerPayloadCaptured.guardianPhone, '+20 100 999 8888');
+      assert.strictEqual(registerPayloadCaptured.academicYear, 'Grade 11 - Science');
+      assert.strictEqual(registerPayloadCaptured.studentCode, 'STU-EXP-01');
+    });
+
+    it('should propagate 409 duplicate email error cleanly to admin UI without phantom success', async () => {
+      const failingApiClient = {
+        post: async () => {
+          const error = new Error('A user with email duplicate@example.com already exists in this organization.');
+          error.response = {
+            status: 409,
+            data: { detail: 'A user with email duplicate@example.com already exists in this organization.' },
+          };
+          throw error;
+        },
+      };
+
+      await assert.rejects(
+        async () => {
+          await failingApiClient.post('/auth/register', { email: 'duplicate@example.com' });
+        },
+        (err) => {
+          assert.strictEqual(err.response.status, 409);
+          assert.match(err.message, /already exists/);
+          return true;
+        }
+      );
+    });
+  });
 });

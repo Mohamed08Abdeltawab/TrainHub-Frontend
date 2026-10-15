@@ -44,6 +44,8 @@ interface PagedResult<T> {
 interface RegisterResponse {
   userId: string;
   accessToken: string;
+  studentId?: string;
+  studentCode?: string;
 }
 
 const storageKey = (orgId: string) => `trainhub.organization.${orgId}.students`;
@@ -203,16 +205,24 @@ export const studentsApi = {
         confirmPassword: 'Password123!',
         organizationId: orgId,
         phoneNumber: input.phone?.trim() || undefined,
-      });
-      const userId = regRes.data.userId;
-      const studentCode = `STU-${Math.floor(100000 + Math.random() * 900000)}`;
-      const { data } = await apiClient.post<BackendStudentDto>('/students', {
-        userId,
-        studentCode,
         guardianPhone: input.phone?.trim() || undefined,
         academicYear: input.course?.trim() || undefined,
+        studentCode: input.studentCode?.trim() || undefined,
       });
-      return mapStudent(data);
+
+      const studentId = regRes.data.studentId || regRes.data.userId;
+      const studentCode = regRes.data.studentCode || input.studentCode || `STU-${regRes.data.userId.slice(0, 8).toUpperCase()}`;
+
+      return {
+        id: studentId,
+        name: input.name.trim(),
+        email: input.email.trim(),
+        phone: input.phone?.trim() || '',
+        course: input.course?.trim() || '',
+        status: 'Active',
+        studentCode,
+        createdAt: new Date().toISOString(),
+      };
     }
     const student = { ...input, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     writeDemoStudents(orgId, [student, ...readDemoStudents(orgId)]);
