@@ -17,6 +17,12 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    try {
+      const activeOrgId = localStorage.getItem('activeOrganizationId');
+      if (activeOrgId) {
+        config.headers['X-Organization-Id'] = activeOrgId;
+      }
+    } catch { /* ignore */ }
     // Normalize relative URL so Axios does not drop the /api pathname from baseURL
     if (config.url && config.url.startsWith('/') && !config.url.startsWith('http')) {
       config.url = config.url.replace(/^\/+/, '');

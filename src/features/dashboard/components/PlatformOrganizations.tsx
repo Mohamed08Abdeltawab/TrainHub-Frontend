@@ -253,7 +253,12 @@ export default function PlatformOrganizations() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/organizations/${org.slug || org.id}/overview`)}
+                        onClick={() => {
+                          try {
+                            localStorage.setItem('activeOrganizationId', org.id);
+                          } catch { /* ignore */ }
+                          navigate(`/admin/organizations/${org.slug || org.id}/overview`);
+                        }}
                         className="gap-1.5 text-xs"
                       >
                         <span>{t('Open workspace')}</span>
