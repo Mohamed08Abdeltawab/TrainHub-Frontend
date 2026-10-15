@@ -169,6 +169,7 @@ export const instructorsApi = {
         password: 'Password123!',
         confirmPassword: 'Password123!',
         organizationId: orgId,
+        role: 'Instructor',
         phoneNumber: input.phone?.trim() || undefined,
       });
       const userId = regRes.data.userId;

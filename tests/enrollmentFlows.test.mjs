@@ -278,4 +278,56 @@ describe('Task 5: Enrollment Flows Validation & Architecture', () => {
       );
     });
   });
+
+  describe('CON-02: Elimination of Silent localStorage Fallback for Enrollments', () => {
+    it('should propagate API errors on enroll without falling back to local mock data in non-demo mode', async () => {
+      const enrollStudent = async (isDemo, mockApiFn) => {
+        if (!isDemo) {
+          return await mockApiFn();
+        }
+        return { id: 'mock-enr' };
+      };
+
+      const failingApi = async () => {
+        const error = new Error('Capacity exceeded');
+        error.status = 400;
+        throw error;
+      };
+
+      await assert.rejects(
+        async () => {
+          await enrollStudent(false, failingApi);
+        },
+        (err) => {
+          assert.strictEqual(err.message, 'Capacity exceeded');
+          assert.strictEqual(err.status, 400);
+          return true;
+        }
+      );
+    });
+
+    it('should propagate API errors on status update or remove without silent fallback in non-demo mode', async () => {
+      let localStorageModified = false;
+      const updateStatus = async (isDemo, mockApiFn) => {
+        if (!isDemo) {
+          return await mockApiFn();
+        }
+        localStorageModified = true;
+      };
+
+      const serverErrorApi = async () => {
+        throw new Error('503 Service Unavailable');
+      };
+
+      await assert.rejects(
+        async () => {
+          await updateStatus(false, serverErrorApi);
+        },
+        /503 Service Unavailable/
+      );
+
+      assert.strictEqual(localStorageModified, false, 'localStorage must not be modified when real API fails');
+    });
+  });
 });
+

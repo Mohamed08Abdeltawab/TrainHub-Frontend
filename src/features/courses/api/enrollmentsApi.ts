@@ -163,15 +163,11 @@ export const enrollmentsApi = {
     if (query?.studentId) params.studentId = query.studentId;
     if (query?.status !== undefined) params.status = query.status;
 
-    try {
-      const { data } = await apiClient.get<PagedResult<BackendEnrollmentDto> | BackendEnrollmentDto[]>('/enrollments', {
-        params,
-      });
-      const items = Array.isArray(data) ? data : data?.items || [];
-      return items.map(mapEnrollment);
-    } catch {
-      return read(orgId, courseId);
-    }
+    const { data } = await apiClient.get<PagedResult<BackendEnrollmentDto> | BackendEnrollmentDto[]>('/enrollments', {
+      params,
+    });
+    const items = Array.isArray(data) ? data : data?.items || [];
+    return items.map(mapEnrollment);
   },
 
   async enroll(orgId: string, courseId: string, studentId: string, demo: boolean, paidAmount?: number): Promise<void> {
@@ -183,48 +179,40 @@ export const enrollmentsApi = {
       return;
     }
 
-    try {
-      // In real mode, find existing groups for this course
-      const { data: groupsRes } = await apiClient.get<PagedResult<BackendCourseGroupDto> | BackendCourseGroupDto[]>(
-        '/coursegroups',
-        {
-          params: { courseId, pageSize: 100 },
-        }
-      );
-      const groups = Array.isArray(groupsRes) ? groupsRes : groupsRes?.items || [];
-      let targetGroup =
-        groups.find((g) => (g.status === 1 || g.statusName === 'Active') && !g.isFull) ||
-        groups.find((g) => g.status === 1 || g.statusName === 'Active') ||
-        groups[0];
-
-      // If no group exists yet for this course, create a default cohort
-      if (!targetGroup) {
-        const today = new Date().toISOString().split('T')[0];
-        const inThreeMonths = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const { data: createdGroup } = await apiClient.post<BackendCourseGroupDto>('/coursegroups', {
-          courseId,
-          name: 'Cohort 1',
-          startDate: today,
-          endDate: inThreeMonths,
-          capacity: 30,
-          status: 1, // Active
-        });
-        targetGroup = createdGroup;
+    // In real mode, find existing groups for this course
+    const { data: groupsRes } = await apiClient.get<PagedResult<BackendCourseGroupDto> | BackendCourseGroupDto[]>(
+      '/coursegroups',
+      {
+        params: { courseId, pageSize: 100 },
       }
+    );
+    const groups = Array.isArray(groupsRes) ? groupsRes : groupsRes?.items || [];
+    let targetGroup =
+      groups.find((g) => (g.status === 1 || g.statusName === 'Active') && !g.isFull) ||
+      groups.find((g) => g.status === 1 || g.statusName === 'Active') ||
+      groups[0];
 
-      await apiClient.post('/enrollments', {
-        courseGroupId: targetGroup.id,
-        studentId,
+    // If no group exists yet for this course, create a default cohort
+    if (!targetGroup) {
+      const today = new Date().toISOString().split('T')[0];
+      const inThreeMonths = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const { data: createdGroup } = await apiClient.post<BackendCourseGroupDto>('/coursegroups', {
+        courseId,
+        name: 'Cohort 1',
+        startDate: today,
+        endDate: inThreeMonths,
+        capacity: 30,
         status: 1, // Active
-        paidAmount: paidAmount ?? 0,
       });
-    } catch {
-      // Fallback to local storage persistence
-      write(orgId, courseId, [
-        ...read(orgId, courseId).filter((item) => item.studentId !== studentId),
-        { studentId, status: 'Active', enrolledAt: new Date().toISOString() },
-      ]);
+      targetGroup = createdGroup;
     }
+
+    await apiClient.post('/enrollments', {
+      courseGroupId: targetGroup.id,
+      studentId,
+      status: 1, // Active
+      paidAmount: paidAmount ?? 0,
+    });
   },
 
   async remove(orgId: string, courseId: string, studentId: string, demo: boolean): Promise<void> {
@@ -233,19 +221,16 @@ export const enrollmentsApi = {
       return;
     }
 
-    try {
-      const { data } = await apiClient.get<PagedResult<BackendEnrollmentDto> | BackendEnrollmentDto[]>('/enrollments', {
-        params: { courseId, studentId, pageSize: 1 },
-      });
-      const items = Array.isArray(data) ? data : data?.items || [];
-      const enrollment = items[0];
-      if (enrollment) {
-        await apiClient.delete(`/enrollments/${encodeURIComponent(enrollment.id)}`);
-      }
-    } catch {
-      // Fallback
+    const { data } = await apiClient.get<PagedResult<BackendEnrollmentDto> | BackendEnrollmentDto[]>('/enrollments', {
+      params: { courseId, studentId, pageSize: 1 },
+    });
+    const items = Array.isArray(data) ? data : data?.items || [];
+    const enrollment = items[0];
+    if (enrollment) {
+      await apiClient.delete(`/enrollments/${encodeURIComponent(enrollment.id)}`);
+    } else {
+      throw new Error('Enrollment not found for removal.');
     }
-    write(orgId, courseId, read(orgId, courseId).filter((item) => item.studentId !== studentId));
   },
 
   async updateStatus(
@@ -264,26 +249,19 @@ export const enrollmentsApi = {
       return;
     }
 
-    try {
-      const { data } = await apiClient.get<PagedResult<BackendEnrollmentDto> | BackendEnrollmentDto[]>('/enrollments', {
-        params: { courseId, studentId, pageSize: 1 },
+    const { data } = await apiClient.get<PagedResult<BackendEnrollmentDto> | BackendEnrollmentDto[]>('/enrollments', {
+      params: { courseId, studentId, pageSize: 1 },
+    });
+    const items = Array.isArray(data) ? data : data?.items || [];
+    const enrollment = items[0];
+    if (enrollment) {
+      const backendStatus = statusMap[status] ?? 1;
+      await apiClient.patch(`/enrollments/${encodeURIComponent(enrollment.id)}/status`, {
+        status: backendStatus,
       });
-      const items = Array.isArray(data) ? data : data?.items || [];
-      const enrollment = items[0];
-      if (enrollment) {
-        const backendStatus = statusMap[status] ?? 1;
-        await apiClient.patch(`/enrollments/${encodeURIComponent(enrollment.id)}/status`, {
-          status: backendStatus,
-        });
-      }
-    } catch {
-      // Fallback
+    } else {
+      throw new Error('Enrollment not found for status update.');
     }
-    write(
-      orgId,
-      courseId,
-      read(orgId, courseId).map((item) => (item.studentId === studentId ? { ...item, status } : item))
-    );
   },
 
   // Direct enrollment resource APIs

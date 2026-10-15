@@ -132,39 +132,12 @@ export const authApi = {
         password: payload.password,
         confirmPassword: payload.confirmPassword || payload.password,
         organization: payload.organization.trim(),
+        organizationName: payload.organization.trim(),
         organizationId: payload.organizationId,
-      });
-      saveLocalRegisteredUser({
-        name: payload.name.trim(),
-        email: payload.email.trim(),
-        password: payload.password,
-        organization: payload.organization.trim(),
       });
       return data;
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 409) {
-        throw error;
-      }
-      if (axios.isAxiosError(error) && error.response?.status === 400 && (error.response.data as { errors?: unknown })?.errors) {
-        throw error;
-      }
-
-      // Offline or mock standalone MVP fallback
-      const localUser = {
-        id: `user-${Date.now()}`,
-        name: payload.name.trim(),
-        email: payload.email.trim(),
-        password: payload.password,
-        organization: payload.organization.trim(),
-        organizationId: `org-${Date.now()}`,
-        role: 'ORG_ADMIN' as DashboardRole,
-      };
-      saveLocalRegisteredUser(localUser);
-      return {
-        id: localUser.id,
-        name: localUser.name,
-        email: localUser.email,
-      };
+      throw error;
     }
   },
 

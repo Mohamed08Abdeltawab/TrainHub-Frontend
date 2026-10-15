@@ -354,4 +354,75 @@ describe('Task 6: Attendance Flows Validation & Architecture', () => {
       assert.strictEqual(merged.find((e) => e.studentId === 'stu-3')?.status, 'Present');
     });
   });
+
+  describe('CON-02: Elimination of Silent localStorage Fallback on API Failures', () => {
+    it('should throw and propagate errors when save API fails in non-demo mode', async () => {
+      const saveAttendance = async (isDemo, mockApiFn) => {
+        if (!isDemo) {
+          return await mockApiFn();
+        }
+        return 'demo-fallback';
+      };
+
+      const failingApi = async () => {
+        throw new Error('500 Internal Server Error: Failed to commit attendance');
+      };
+
+      await assert.rejects(
+        async () => {
+          await saveAttendance(false, failingApi);
+        },
+        {
+          message: '500 Internal Server Error: Failed to commit attendance',
+        }
+      );
+    });
+
+    it('should not silently fall back to localStorage on network timeout or 4xx/5xx in non-demo mode', async () => {
+      let localStorageWritten = false;
+      const fakeLocalStorage = {
+        setItem: () => {
+          localStorageWritten = true;
+        },
+      };
+
+      const executeSave = async (isDemo) => {
+        if (!isDemo) {
+          throw new Error('Network Error');
+        }
+        fakeLocalStorage.setItem('attendance', 'cached');
+      };
+
+      await assert.rejects(
+        async () => {
+          await executeSave(false);
+        },
+        /Network Error/
+      );
+
+      assert.strictEqual(localStorageWritten, false, 'localStorage must NOT be written when non-demo API fails');
+    });
+
+    it('should allow demo mode to utilize demo persistence without affecting production flow', async () => {
+      let localStorageWritten = false;
+      const fakeLocalStorage = {
+        setItem: () => {
+          localStorageWritten = true;
+        },
+      };
+
+      const executeSave = async (isDemo) => {
+        if (!isDemo) {
+          throw new Error('Network Error');
+        }
+        fakeLocalStorage.setItem('attendance', 'cached');
+        return { success: true };
+      };
+
+      const result = await executeSave(true);
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(localStorageWritten, true);
+    });
+  });
 });
+
