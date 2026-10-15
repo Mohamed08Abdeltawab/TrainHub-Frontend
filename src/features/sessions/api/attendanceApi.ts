@@ -279,36 +279,21 @@ export const attendanceApi = {
       return saved;
     }
 
-    // In real mode, synchronise directly with backend and throw on failure
-    const { data: existing } = await apiClient.get<BackendAttendanceDto[]>(
-      `/sessions/${encodeURIComponent(sessionId)}/attendance`
+    // In real mode, submit all entries in one atomic batch request
+    const payload = {
+      records: entries.map((entry) => ({
+        studentId: entry.studentId,
+        status: attendanceStatusToCode[entry.status] ?? 1,
+        notes: entry.notes || null,
+      })),
+    };
+
+    const { data } = await apiClient.post<BackendAttendanceDto[]>(
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/batch`,
+      payload
     );
-    const existingMap = new Map((existing || []).map((rec) => [rec.studentId, rec]));
 
-    for (const entry of entries) {
-      const existingRecord = existingMap.get(entry.studentId);
-      const statusByte = attendanceStatusToCode[entry.status] ?? 1;
-
-      if (existingRecord) {
-        await apiClient.put(`/attendances/${encodeURIComponent(existingRecord.id)}`, {
-          status: statusByte,
-          notes: entry.notes || null,
-        });
-      } else {
-        await apiClient.post('/attendances', {
-          sessionId,
-          studentId: entry.studentId,
-          status: statusByte,
-          notes: entry.notes || null,
-        });
-      }
-    }
-
-    const { data: updated } = await apiClient.get<BackendAttendanceDto[]>(
-      `/sessions/${encodeURIComponent(sessionId)}/attendance`
-    );
-    const mapped = (updated || []).map(mapAttendance);
-    return mapped;
+    return (data || []).map(mapAttendance);
   },
 
   async listAll(

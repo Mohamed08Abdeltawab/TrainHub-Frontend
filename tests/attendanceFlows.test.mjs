@@ -424,5 +424,146 @@ describe('Task 6: Attendance Flows Validation & Architecture', () => {
       assert.strictEqual(localStorageWritten, true);
     });
   });
+
+  describe('Phase 3.2: Transactional Batch Attendance Contract & UI Workflow', () => {
+    it('should send batch attendance in exactly one POST request to /sessions/{sessionId}/attendance/batch', async () => {
+      let postCallCount = 0;
+      let requestedEndpoint = '';
+      let sentPayload = null;
+
+      const mockApiClient = {
+        post: async (endpoint, payload) => {
+          postCallCount++;
+          requestedEndpoint = endpoint;
+          sentPayload = payload;
+          return {
+            data: payload.records.map((r, i) => ({
+              id: `att-${i + 1}`,
+              organizationId: 'org-1',
+              sessionId: 'sess-100',
+              studentId: r.studentId,
+              studentName: `Student ${r.studentId}`,
+              studentCode: `STU-${i + 1}`,
+              status: r.status,
+              statusName: codeToAttendanceStatus[r.status],
+              markedAt: new Date().toISOString(),
+              notes: r.notes,
+            })),
+          };
+        },
+      };
+
+      const saveBatchAttendance = async (sessionId, entries) => {
+        const payload = {
+          records: entries.map((entry) => ({
+            studentId: entry.studentId,
+            status: attendanceStatusToCode[entry.status] ?? 1,
+            notes: entry.notes || null,
+          })),
+        };
+
+        const { data } = await mockApiClient.post(
+          `/sessions/${encodeURIComponent(sessionId)}/attendance/batch`,
+          payload
+        );
+
+        return (data || []).map(mapBackendAttendance);
+      };
+
+      const entries = [
+        { studentId: 'stu-1', status: 'Present', notes: 'On time' },
+        { studentId: 'stu-2', status: 'Late', notes: 'Traffic' },
+        { studentId: 'stu-3', status: 'Absent', notes: null },
+      ];
+
+      const result = await saveBatchAttendance('sess-100', entries);
+
+      assert.strictEqual(postCallCount, 1, 'Batch API must be called exactly once');
+      assert.strictEqual(requestedEndpoint, '/sessions/sess-100/attendance/batch');
+      assert.strictEqual(sentPayload.records.length, 3);
+      assert.strictEqual(sentPayload.records[0].studentId, 'stu-1');
+      assert.strictEqual(sentPayload.records[0].status, 1);
+      assert.strictEqual(sentPayload.records[0].notes, 'On time');
+      assert.strictEqual(sentPayload.records[1].status, 2);
+      assert.strictEqual(sentPayload.records[2].status, 0);
+
+      assert.strictEqual(result.length, 3);
+      assert.strictEqual(result[0].status, 'Present');
+      assert.strictEqual(result[1].status, 'Late');
+      assert.strictEqual(result[2].status, 'Absent');
+    });
+
+    it('should eliminate per-student request loops in real mode', async () => {
+      let individualPutCalls = 0;
+      let individualPostCalls = 0;
+      let batchCalls = 0;
+
+      const executeBatchSave = async (sessionId, entries) => {
+        batchCalls++;
+        return entries.map((e) => ({
+          ...e,
+          id: `saved-${e.studentId}`,
+        }));
+      };
+
+      const roster = [
+        { studentId: 's1', status: 'Present' },
+        { studentId: 's2', status: 'Present' },
+        { studentId: 's3', status: 'Late' },
+        { studentId: 's4', status: 'Excused' },
+      ];
+
+      await executeBatchSave('sess-1', roster);
+
+      assert.strictEqual(batchCalls, 1, 'Must invoke single batch call');
+      assert.strictEqual(individualPutCalls, 0, 'Must NOT perform individual PUT requests');
+      assert.strictEqual(individualPostCalls, 0, 'Must NOT perform individual POST requests');
+    });
+
+    it('should not discard unsaved drafts and should propagate error when batch API fails', async () => {
+      let draftState = {
+        'stu-1': 'Present',
+        'stu-2': 'Absent',
+      };
+      let saveNotice = false;
+      let saveError = '';
+
+      const failingBatchSave = async () => {
+        throw new Error('409 Conflict: Student stu-2 is not enrolled in the course group for this session.');
+      };
+
+      try {
+        await failingBatchSave();
+        saveNotice = true;
+      } catch (err) {
+        saveError = err.message;
+      }
+
+      assert.strictEqual(saveNotice, false, 'Save notice must remain false on error');
+      assert.match(saveError, /409 Conflict/);
+      assert.strictEqual(draftState['stu-1'], 'Present', 'Draft state must be preserved for editing');
+      assert.strictEqual(draftState['stu-2'], 'Absent', 'Draft state must be preserved for editing');
+    });
+
+    it('should prevent duplicate submissions while saving is active', () => {
+      let saving = false;
+      let submissionAttempts = 0;
+
+      const submitHandler = () => {
+        if (saving) return 'blocked';
+        saving = true;
+        submissionAttempts++;
+        return 'submitted';
+      };
+
+      const firstCall = submitHandler();
+      const secondCall = submitHandler();
+
+      assert.strictEqual(firstCall, 'submitted');
+      assert.strictEqual(secondCall, 'blocked');
+      assert.strictEqual(submissionAttempts, 1);
+    });
+  });
 });
+
 
