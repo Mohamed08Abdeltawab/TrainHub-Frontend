@@ -39,16 +39,16 @@ export default function OrganizationProfile({ defaultName }: { defaultName: stri
     let isMounted = true;
     setProfile({ ...emptyProfile, name: defaultName });
 
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        setProfile(readProfile(JSON.parse(stored), defaultName));
+    if (isDemo) {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          setProfile(readProfile(JSON.parse(stored), defaultName));
+        }
+      } catch {
+        /* Browser storage unavailable */
       }
-    } catch {
-      /* Browser storage unavailable */
-    }
-
-    if (!isDemo) {
+    } else {
       organizationsApi.getCurrent()
         .then((org) => {
           if (!isMounted) return;
@@ -61,11 +61,6 @@ export default function OrganizationProfile({ defaultName }: { defaultName: stri
             description: '',
           };
           setProfile(loadedProfile);
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(loadedProfile));
-          } catch {
-            /* ignore */
-          }
         })
         .catch((err) => {
           if (!isMounted) return;
@@ -117,11 +112,6 @@ export default function OrganizationProfile({ defaultName }: { defaultName: stri
           description: validated.data.description || '',
         };
         setProfile(newProfile);
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(newProfile));
-        } catch {
-          /* ignore */
-        }
       } else {
         localStorage.setItem(storageKey, JSON.stringify(validated.data));
         setProfile(validated.data);
