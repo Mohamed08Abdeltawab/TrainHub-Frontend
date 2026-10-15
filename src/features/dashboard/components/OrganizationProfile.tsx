@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Building2, CheckCircle2, Globe2, MapPin, Save } from 'lucide-react';
+import { Building2, CheckCircle2, Globe2, Loader2, MapPin, Save } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from '@/components/ui';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { organizationsApi } from '@/api/organizationsApi';
+import { getErrorPresentation } from '@/utils/errorPresentation';
 import { z } from 'zod';
 
 type Profile = { name: string; email: string; phone: string; website: string; address: string; description: string };
@@ -25,31 +27,66 @@ function readProfile(value: unknown, fallbackName: string): Profile {
 export default function OrganizationProfile({ defaultName }: { defaultName: string }) {
   const { orgId = 'demo' } = useParams();
   const { t } = useLanguage();
+  const isDemo = orgId === 'demo';
   const storageKey = `trainhub.organization.${orgId}.profile`;
   const [profile, setProfile] = useState<Profile>({ ...emptyProfile, name: defaultName });
   const [saved, setSaved] = useState(false);
-  const [storageError, setStorageError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [validationError, setValidationError] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
     setProfile({ ...emptyProfile, name: defaultName });
+
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         setProfile(readProfile(JSON.parse(stored), defaultName));
       }
-    } catch { setStorageError(true); }
-  }, [defaultName, storageKey]);
+    } catch {
+      /* Browser storage unavailable */
+    }
+
+    if (!isDemo) {
+      organizationsApi.getCurrent()
+        .then((org) => {
+          if (!isMounted) return;
+          const loadedProfile: Profile = {
+            name: org.name || defaultName,
+            email: org.email || '',
+            phone: org.phone || '',
+            website: org.logoUrl || '',
+            address: org.address || '',
+            description: '',
+          };
+          setProfile(loadedProfile);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(loadedProfile));
+          } catch {
+            /* ignore */
+          }
+        })
+        .catch(() => {
+          // Keep existing profile from storage or fallback if API is unreachable
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [defaultName, isDemo, storageKey]);
 
   const update = (key: keyof Profile, value: string) => {
     setProfile((current) => ({ ...current, [key]: value }));
     setSaved(false);
     setValidationError('');
+    setErrorMessage(null);
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setStorageError(false);
+    setErrorMessage(null);
     const validated = profileSchema.safeParse(profile);
     if (!validated.success) {
       setValidationError(validated.error.issues[0]?.message ?? 'Check the organization details and try again.');
@@ -57,12 +94,46 @@ export default function OrganizationProfile({ defaultName }: { defaultName: stri
       return;
     }
     setValidationError('');
+    setSubmitting(true);
+
     try {
-      localStorage.setItem(storageKey, JSON.stringify(validated.data));
-      setProfile(validated.data);
+      if (!isDemo) {
+        const updated = await organizationsApi.updateCurrent({
+          name: validated.data.name,
+          email: validated.data.email || undefined,
+          phone: validated.data.phone || undefined,
+          address: validated.data.address || undefined,
+          logoUrl: validated.data.website || undefined,
+        });
+
+        const newProfile: Profile = {
+          name: updated.name,
+          email: updated.email || '',
+          phone: updated.phone || '',
+          website: updated.logoUrl || '',
+          address: updated.address || '',
+          description: validated.data.description || '',
+        };
+        setProfile(newProfile);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(newProfile));
+        } catch {
+          /* ignore */
+        }
+      } else {
+        localStorage.setItem(storageKey, JSON.stringify(validated.data));
+        setProfile(validated.data);
+      }
+
       setSaved(true);
       window.dispatchEvent(new CustomEvent('trainhub:organization-profile-updated', { detail: { orgId, profile: validated.data } }));
-    } catch { setStorageError(true); setSaved(false); }
+    } catch (err) {
+      const presentation = getErrorPresentation(err);
+      setErrorMessage(presentation.description);
+      setSaved(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -97,10 +168,11 @@ export default function OrganizationProfile({ defaultName }: { defaultName: stri
                 <p className="text-end text-[11px] text-muted-foreground">{profile.description.length}/500</p>
               </div>
               {validationError && <p role="alert" className="text-xs text-destructive">{t(validationError)}</p>}
-              {(saved || storageError) && <p role="status" className={`flex items-center gap-2 text-xs ${saved ? 'text-emerald-500' : 'text-destructive'}`}>{saved ? <CheckCircle2 className="size-4" /> : null}{t(saved ? 'Organization profile saved.' : 'Could not save your changes. Check browser storage and try again.')}</p>}
+              {errorMessage && <p role="alert" className="text-xs text-destructive">{errorMessage}</p>}
+              {saved && <p role="status" className="flex items-center gap-2 text-xs text-emerald-500"><CheckCircle2 className="size-4" />{t('Organization profile saved.')}</p>}
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                 <p className="text-[11px] text-muted-foreground">{t('Required fields are marked by your browser.')}</p>
-                <Button type="submit" leadingIcon={<Save className="size-4" />}>{t('Save changes')}</Button>
+                <Button type="submit" disabled={submitting} leadingIcon={submitting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}>{submitting ? t('Saving...') : t('Save changes')}</Button>
               </div>
             </form>
           </CardContent>
