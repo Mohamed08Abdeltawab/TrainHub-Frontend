@@ -33,6 +33,7 @@ function App() {
             >
               <Route index element={<Navigate to="overview" replace />} />
               <Route path=":section" element={<DashboardSection />} />
+              <Route path=":section/:courseId" element={<DashboardSection />} />
             </Route>
             <Route
               path={ROUTES.ADMIN_DASHBOARD}
@@ -44,6 +45,7 @@ function App() {
             >
               <Route index element={<Navigate to="overview" replace />} />
               <Route path=":section" element={<DashboardSection />} />
+              <Route path=":section/:courseId" element={<DashboardSection />} />
             </Route>
             <Route
               path={ROUTES.INSTRUCTOR_DASHBOARD}
@@ -55,6 +57,7 @@ function App() {
             >
               <Route index element={<Navigate to="overview" replace />} />
               <Route path=":section" element={<DashboardSection />} />
+              <Route path=":section/:courseId" element={<DashboardSection />} />
             </Route>
             <Route
               path={ROUTES.STUDENT_DASHBOARD}
@@ -66,6 +69,7 @@ function App() {
             >
               <Route index element={<Navigate to="overview" replace />} />
               <Route path=":section" element={<DashboardSection />} />
+              <Route path=":section/:courseId" element={<DashboardSection />} />
             </Route>
             <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
           </Routes>

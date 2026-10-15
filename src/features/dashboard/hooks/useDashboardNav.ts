@@ -81,6 +81,24 @@ export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePa
   };
 
   const openPrimarySection = (targetLabel?: string) => {
+    if (targetLabel === 'Add organization' || (role === 'SUPER_ADMIN' && targetLabel === 'Add organization')) {
+      routerNavigate(`${basePath}/organizations?action=create`);
+      setMobileOpen(false);
+      return;
+    }
+
+    if (targetLabel === 'Create assignment' || (role === 'INSTRUCTOR' && targetLabel === 'Create assignment')) {
+      routerNavigate(`${basePath}/assignments?action=create`);
+      setMobileOpen(false);
+      return;
+    }
+
+    if (targetLabel === 'Explore courses' || (role === 'STUDENT' && targetLabel === 'Explore courses')) {
+      routerNavigate(`${basePath}/my-courses?tab=explore`);
+      setMobileOpen(false);
+      return;
+    }
+
     if (targetLabel) {
       const match = navigation.find(
         (entry) =>
@@ -106,7 +124,7 @@ export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePa
         return;
       }
     } else if (role === 'INSTRUCTOR') {
-      const item = navigation.find((entry) => entry.label === 'Sessions' || entry.label === 'My courses');
+      const item = navigation.find((entry) => entry.label === 'Assignments' || entry.label === 'Sessions' || entry.label === 'My courses');
       if (item) {
         navigate(item.label);
         return;
@@ -120,7 +138,7 @@ export function useDashboardNav(initialRole: DashboardRole = 'ORG_ADMIN', basePa
     }
 
     const item =
-      navigation.find((entry) => /courses|organizations|sessions/i.test(entry.label)) ??
+      navigation.find((entry) => /courses|organizations|assignments|sessions/i.test(entry.label)) ??
       navigation[0];
     if (item) navigate(item.label);
   };

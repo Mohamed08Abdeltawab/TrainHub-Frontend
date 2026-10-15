@@ -114,7 +114,7 @@ export default function DashboardOverview({
                 {t(content.subtitle)}
               </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => onOpenPrimarySection(content.action)}>
+            <Button variant="ghost" size="sm" onClick={() => onOpenPrimarySection(content.tableTitle)}>
               {t('View all')} <ArrowRight className="size-3.5 rtl:rotate-180" />
             </Button>
           </CardHeader>

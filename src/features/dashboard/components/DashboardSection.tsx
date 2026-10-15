@@ -1,3 +1,4 @@
+import { useParams } from 'react-router-dom';
 import { useDashboardContext } from '@/layouts/DashboardLayout';
 import DashboardOverview from './DashboardOverview';
 import DashboardEmptySection from './DashboardEmptySection';
@@ -19,6 +20,9 @@ import AttendancePage from '@/features/sessions/components/AttendancePage';
 import { useDashboardData } from '@/features/dashboard/hooks/useDashboardData';
 import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
 import MyCourses from '@/features/courses/components/MyCourses';
+import StudentCourseDetails from '@/features/courses/components/StudentCourseDetails';
+import InstructorCourseDetails from '@/features/courses/components/InstructorCourseDetails';
+import AssignmentsList from '@/features/assignments/components/AssignmentsList';
 import ErrorState from '@/components/errors/ErrorState';
 import { useLanguage } from '@/i18n/LanguageContext';
 import PlatformUsersView from '@/features/platform/components/PlatformUsersView';
@@ -29,6 +33,7 @@ import PlatformUsersView from '@/features/platform/components/PlatformUsersView'
  * and renders either the full overview or a placeholder for sections not yet built.
  */
 export default function DashboardSection() {
+  const { courseId } = useParams();
   const { content, active, activeItem, navigate, openPrimarySection, role } =
     useDashboardContext();
   const dashboardQuery = useDashboardData(role, active === 'Overview');
@@ -54,11 +59,22 @@ export default function DashboardSection() {
     return <PlatformOrganizations />;
   }
 
+  if (active === 'Assignments' && (role === 'INSTRUCTOR' || role === 'ORG_ADMIN' || role === 'SUPER_ADMIN')) {
+    return <AssignmentsList />;
+  }
+
   if (active === 'Learners' && (role === 'ORG_ADMIN' || role === 'INSTRUCTOR' || role === 'SUPER_ADMIN')) {
     return <StudentsList />;
   }
 
   if (active === 'My courses' && (role === 'STUDENT' || role === 'INSTRUCTOR')) {
+    if (courseId) {
+      return role === 'INSTRUCTOR' ? (
+        <InstructorCourseDetails courseId={courseId} />
+      ) : (
+        <StudentCourseDetails courseId={courseId} />
+      );
+    }
     return <MyCourses />;
   }
 

@@ -31,6 +31,7 @@ export const roleNavigation: Record<DashboardRole, NavItem[]> = {
     { label: 'Overview', icon: 'overview', group: 'Workspace' },
     { label: 'My courses', icon: 'courses', group: 'Teaching' },
     { label: 'My cohorts', icon: 'calendar', group: 'Teaching' },
+    { label: 'Assignments', icon: 'assignments', group: 'Teaching' },
     { label: 'Sessions', icon: 'calendar', group: 'Teaching' },
     { label: 'Attendance', icon: 'calendar', group: 'Teaching' },
     { label: 'Schedule', icon: 'calendar', group: 'Teaching' },
